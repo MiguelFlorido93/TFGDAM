@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Almacén TFG - Gestión de reservas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1>📦 Almacén TFG</h1>
+        <nav>
+            <button class="tab active" data-tab="productos">Productos</button>
+            <button class="tab" data-tab="reservas">Mis reservas</button>
+        </nav>
+        <div class="user-box">
+            <label for="usuario">Usuario:</label>
+            <select id="usuario"></select>
+        </div>
+    </header>
+
+    <main>
+        <!-- VISTA PRODUCTOS -->
+        <section id="view-productos" class="view active">
+            <div class="filtros">
+                <input id="buscar" type="search" placeholder="Buscar por nombre o SKU...">
+                <select id="filtro-categoria">
+                    <option value="">Todas las categorías</option>
+                </select>
+            </div>
+
+            <div id="productos-grid" class="grid"></div>
+
+            <div class="paginacion">
+                <button id="prev">‹ Anterior</button>
+                <span id="pagina-info"></span>
+                <button id="next">Siguiente ›</button>
+            </div>
+        </section>
+
+        <!-- VISTA RESERVAS -->
+        <section id="view-reservas" class="view">
+            <h2>Reservas del usuario</h2>
+            <div id="reservas-lista"></div>
+        </section>
+    </main>
+
+    <!-- MODAL RESERVA -->
+    <div id="modal" class="modal oculto">
+        <div class="modal-contenido">
+            <h3 id="modal-titulo">Nueva reserva</h3>
+            <p id="modal-info"></p>
+            <label>Cantidad
+                <input id="modal-cantidad" type="number" min="1" value="1">
+            </label>
+            <label>Fecha de recogida
+                <input id="modal-fecha" type="date">
+            </label>
+            <label>Notas
+                <textarea id="modal-notas" rows="2" placeholder="Opcional"></textarea>
+            </label>
+            <div class="modal-acciones">
+                <button id="modal-cancelar" class="secundario">Cancelar</button>
+                <button id="modal-confirmar" class="primario">Reservar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast oculto"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

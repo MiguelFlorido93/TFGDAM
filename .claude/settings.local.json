@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(sc query:*)",
+      "Bash(winget install:*)",
+      "Bash(export PATH=\"/c/Users/adria/AppData/Local/Microsoft/WinGet/Packages/OpenJS.NodeJS.LTS_Microsoft.Winget.Source_8wekyb3d8bbwe/node-v24.14.1-win-x64:$PATH\")",
+      "Bash(npm install:*)",
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -e \"SELECT VERSION\\(\\);\")",
+      "Bash(node -e \"require\\('./server.js'\\)\")",
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(kill %1)",
+      "Bash(net stop:*)",
+      "Bash(powershell -Command \"Start-Process -FilePath 'C:\\\\Users\\\\adria\\\\OneDrive\\\\Escritorio\\\\tfg\\\\TFGDAM\\\\scripts\\\\reset_mysql.bat' -Verb RunAs -Wait\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p123 -e \"SELECT VERSION\\(\\), CURRENT_USER\\(\\);\")",
+      "Bash(tasklist)",
+      "Bash(powershell -Command \"Start-Process -FilePath 'C:\\\\Users\\\\adria\\\\OneDrive\\\\Escritorio\\\\tfg\\\\TFGDAM\\\\scripts\\\\reset_mysql.bat' -Verb RunAs -Wait -WindowStyle Hidden\")",
+      "Read(//c/ProgramData/MySQL//**)",
+      "Read(//c/ProgramData/MySQL/**)",
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p123 -e \"SELECT CURRENT_USER\\(\\);\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p123 -e \"SELECT VERSION\\(\\), USER\\(\\); SHOW DATABASES;\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p123)",
+      "Bash(npm start:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /F /PID 27600)",
+      "Bash(cmd //c \"taskkill /F /PID 27600\")",
+      "Bash(curl -s \"http://localhost:3001/api/productos?limit=2\")",
+      "Bash(curl -s http://localhost:3001/api/usuarios)",
+      "Bash(curl -s \"http://localhost:3001/api/reservas?usuario_id=3\")",
+      "Bash(curl -s -I http://localhost:3001/)"
+    ]
+  }
+}

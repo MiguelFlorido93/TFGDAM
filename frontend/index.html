@@ -2,72 +2,262 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Almacén TFG - Gestión de reservas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="description" content="Stockly · Sistema inteligente de gestión de almacén y reservas">
+    <title>Stockly · Gestión de almacén</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header class="topbar">
-        <h1>📦 Almacén TFG</h1>
-        <nav>
-            <button class="tab active" data-tab="productos">Productos</button>
-            <button class="tab" data-tab="reservas">Mis reservas</button>
-        </nav>
-        <div class="user-box">
-            <label for="usuario">Usuario:</label>
-            <select id="usuario"></select>
+
+<!-- ============================================================
+     LOGIN
+     ============================================================ -->
+<div id="auth-screen" class="auth-screen">
+    <div class="auth-bg">
+        <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    </div>
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="brand-logo logo-anim">📦</div>
+            <h1><span class="grad-text">Stockly</span></h1>
+            <p class="muted">Gestión inteligente de almacén y reservas</p>
         </div>
-    </header>
 
-    <main>
-        <!-- VISTA PRODUCTOS -->
-        <section id="view-productos" class="view active">
-            <div class="filtros">
-                <input id="buscar" type="search" placeholder="Buscar por nombre o SKU...">
-                <select id="filtro-categoria">
-                    <option value="">Todas las categorías</option>
-                </select>
-            </div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-auth="login">Entrar</button>
+            <button class="auth-tab" data-auth="register">Registrarse</button>
+        </div>
 
-            <div id="productos-grid" class="grid"></div>
-
-            <div class="paginacion">
-                <button id="prev">‹ Anterior</button>
-                <span id="pagina-info"></span>
-                <button id="next">Siguiente ›</button>
-            </div>
-        </section>
-
-        <!-- VISTA RESERVAS -->
-        <section id="view-reservas" class="view">
-            <h2>Reservas del usuario</h2>
-            <div id="reservas-lista"></div>
-        </section>
-    </main>
-
-    <!-- MODAL RESERVA -->
-    <div id="modal" class="modal oculto">
-        <div class="modal-contenido">
-            <h3 id="modal-titulo">Nueva reserva</h3>
-            <p id="modal-info"></p>
-            <label>Cantidad
-                <input id="modal-cantidad" type="number" min="1" value="1">
+        <form id="form-login" class="auth-form active">
+            <label>Email
+                <input type="email" id="login-email" required autocomplete="username" placeholder="tu@correo.com">
             </label>
-            <label>Fecha de recogida
-                <input id="modal-fecha" type="date">
+            <label>Contraseña
+                <input type="password" id="login-password" required autocomplete="current-password" minlength="6">
             </label>
-            <label>Notas
-                <textarea id="modal-notas" rows="2" placeholder="Opcional"></textarea>
+            <button class="btn btn-primary btn-block" type="submit">Iniciar sesión</button>
+            <details class="demo-creds">
+                <summary>Cuentas de demostración</summary>
+                <ul>
+                    <li><code>adrian@tfg.local</code> / <code>password123</code> (admin)</li>
+                    <li><code>laura@tfg.local</code> / <code>password123</code> (operario)</li>
+                    <li><code>marcos@tfg.local</code> / <code>password123</code> (cliente)</li>
+                </ul>
+            </details>
+        </form>
+
+        <form id="form-register" class="auth-form">
+            <label>Nombre completo
+                <input type="text" id="reg-nombre" required>
             </label>
-            <div class="modal-acciones">
-                <button id="modal-cancelar" class="secundario">Cancelar</button>
-                <button id="modal-confirmar" class="primario">Reservar</button>
+            <label>Email
+                <input type="email" id="reg-email" required autocomplete="email">
+            </label>
+            <label>Contraseña (mín. 6)
+                <input type="password" id="reg-password" required minlength="6" autocomplete="new-password">
+            </label>
+            <button class="btn btn-primary btn-block" type="submit">Crear cuenta</button>
+        </form>
+    </div>
+    <footer class="auth-footer">Stockly · TFG DAM · Adrián Bravo Santos y Miguel Ángel Florido · 2026</footer>
+</div>
+
+<!-- ============================================================
+     APP
+     ============================================================ -->
+<div id="app" class="app hidden">
+
+<header class="topbar">
+    <div class="topbar-brand">
+        <span class="brand-logo">📦</span>
+        <span class="brand-text grad-text">Stockly</span>
+    </div>
+
+    <nav class="tabs desktop-tabs">
+        <button class="tab active" data-view="productos"><span class="tab-icon">🛒</span><span>Productos</span></button>
+        <button class="tab" data-view="reservas"><span class="tab-icon">📋</span><span>Reservas</span></button>
+        <button class="tab admin-only" data-view="dashboard"><span class="tab-icon">📊</span><span>Dashboard</span></button>
+        <button class="tab admin-only" data-view="inventario"><span class="tab-icon">📦</span><span>Inventario</span></button>
+        <button class="tab admin-only" data-view="usuarios"><span class="tab-icon">👥</span><span>Usuarios</span></button>
+    </nav>
+
+    <div class="topbar-actions">
+        <button id="btn-theme" class="icon-btn" title="Cambiar tema">🌙</button>
+        <div class="user-menu">
+            <button id="btn-user" class="user-chip">
+                <span id="user-avatar" class="avatar">?</span>
+                <span id="user-name" class="user-name">Usuario</span>
+            </button>
+            <div id="user-dropdown" class="dropdown hidden">
+                <div class="dropdown-info">
+                    <strong id="dd-name"></strong>
+                    <small id="dd-email"></small>
+                    <span id="dd-rol" class="role-badge"></span>
+                </div>
+                <button id="btn-logout" class="dropdown-item">🚪 Cerrar sesión</button>
             </div>
         </div>
     </div>
+</header>
 
-    <div id="toast" class="toast oculto"></div>
+<main class="main">
 
-    <script src="app.js"></script>
+    <!-- ===== Productos ===== -->
+    <section id="view-productos" class="view active">
+        <div class="view-header">
+            <h2>Catálogo</h2>
+            <span id="prod-count" class="muted"></span>
+        </div>
+        <div class="filtros">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input id="buscar" type="search" placeholder="Buscar por nombre o SKU...">
+            </div>
+            <select id="filtro-categoria">
+                <option value="">Todas las categorías</option>
+            </select>
+            <select id="orden">
+                <option value="id-asc">Más recientes</option>
+                <option value="nombre-asc">Nombre A-Z</option>
+                <option value="precio-asc">Precio ↑</option>
+                <option value="precio-desc">Precio ↓</option>
+                <option value="stock-desc">Más stock</option>
+            </select>
+        </div>
+        <div id="productos-grid" class="grid"></div>
+        <div class="paginacion">
+            <button id="prev" class="btn btn-ghost">‹ Anterior</button>
+            <span id="pagina-info" class="muted"></span>
+            <button id="next" class="btn btn-ghost">Siguiente ›</button>
+        </div>
+    </section>
+
+    <!-- ===== Reservas ===== -->
+    <section id="view-reservas" class="view">
+        <div class="view-header">
+            <h2>Reservas</h2>
+            <div class="chip-filters">
+                <button class="chip active" data-estado="">Todas</button>
+                <button class="chip" data-estado="pendiente">Pendientes</button>
+                <button class="chip" data-estado="confirmada">Confirmadas</button>
+                <button class="chip" data-estado="entregada">Entregadas</button>
+                <button class="chip" data-estado="cancelada">Canceladas</button>
+            </div>
+        </div>
+        <div id="reservas-lista" class="reservas-lista"></div>
+    </section>
+
+    <!-- ===== Dashboard (admin) ===== -->
+    <section id="view-dashboard" class="view admin-only">
+        <div class="view-header"><h2>Dashboard</h2></div>
+        <div class="stat-grid">
+            <div class="stat-card"><div class="stat-icon">📦</div><div><div class="stat-num" id="st-productos">–</div><div class="muted">Productos activos</div></div></div>
+            <div class="stat-card warn"><div class="stat-icon">⚠️</div><div><div class="stat-num" id="st-stock-bajo">–</div><div class="muted">Stock bajo</div></div></div>
+            <div class="stat-card"><div class="stat-icon">👥</div><div><div class="stat-num" id="st-usuarios">–</div><div class="muted">Usuarios</div></div></div>
+            <div class="stat-card"><div class="stat-icon">📋</div><div><div class="stat-num" id="st-pendientes">–</div><div class="muted">Reservas pendientes</div></div></div>
+            <div class="stat-card ok"><div class="stat-icon">✅</div><div><div class="stat-num" id="st-entregadas">–</div><div class="muted">Entregadas</div></div></div>
+            <div class="stat-card"><div class="stat-icon">💶</div><div><div class="stat-num" id="st-valor">–</div><div class="muted">Valor inventario</div></div></div>
+        </div>
+
+        <div class="dash-row">
+            <div class="panel">
+                <h3>Reservas (últimos 14 días)</h3>
+                <div id="chart-reservas" class="chart"></div>
+            </div>
+            <div class="panel">
+                <h3>Stock por categoría</h3>
+                <div id="chart-categorias" class="chart"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Top 5 productos más reservados</h3>
+            <div id="top-productos" class="ranking"></div>
+        </div>
+
+        <div class="panel">
+            <h3>Movimientos recientes</h3>
+            <div id="movimientos" class="movimientos"></div>
+            <div class="row-end"><a id="link-csv" class="btn btn-ghost" href="#">⬇ Exportar reservas a CSV</a></div>
+        </div>
+    </section>
+
+    <!-- ===== Inventario (admin) ===== -->
+    <section id="view-inventario" class="view admin-only">
+        <div class="view-header">
+            <h2>Inventario</h2>
+            <button id="btn-nuevo-producto" class="btn btn-primary">+ Nuevo producto</button>
+        </div>
+        <div class="filtros">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input id="inv-buscar" type="search" placeholder="Buscar...">
+            </div>
+            <select id="inv-categoria"><option value="">Todas las categorías</option></select>
+            <label class="check-inline"><input type="checkbox" id="inv-stockbajo"> Solo stock bajo</label>
+        </div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr>
+                    <th>SKU</th><th>Producto</th><th>Categoría</th><th>Ubicación</th>
+                    <th>Stock</th><th>Reservado</th><th>Mín.</th><th>Precio</th><th></th>
+                </tr></thead>
+                <tbody id="inv-body"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ===== Usuarios (admin) ===== -->
+    <section id="view-usuarios" class="view admin-only">
+        <div class="view-header">
+            <h2>Usuarios</h2>
+            <button id="btn-nuevo-usuario" class="btn btn-primary">+ Nuevo usuario</button>
+        </div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Creado</th><th></th></tr></thead>
+                <tbody id="usr-body"></tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+
+<!-- ===== Bottom nav (móvil) ===== -->
+<nav class="bottom-nav">
+    <button class="bn active" data-view="productos"><span>🛒</span><small>Productos</small></button>
+    <button class="bn" data-view="reservas"><span>📋</span><small>Reservas</small></button>
+    <button class="bn admin-only" data-view="dashboard"><span>📊</span><small>Dashboard</small></button>
+    <button class="bn admin-only" data-view="inventario"><span>📦</span><small>Inventario</small></button>
+    <button class="bn admin-only" data-view="usuarios"><span>👥</span><small>Usuarios</small></button>
+</nav>
+
+</div><!-- /#app -->
+
+<!-- ===== FAB nuevo producto (admin/operario) ===== -->
+<button id="fab-nuevo" class="fab admin-only" title="Nuevo producto">+</button>
+
+<!-- ===== Modal genérico ===== -->
+<div id="modal" class="modal hidden">
+    <div class="modal-box">
+        <header class="modal-head">
+            <h3 id="modal-titulo"></h3>
+            <button class="icon-btn" id="modal-cerrar">✕</button>
+        </header>
+        <div id="modal-body" class="modal-body"></div>
+        <footer id="modal-foot" class="modal-foot"></footer>
+    </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
 </body>
 </html>

@@ -1,21 +1,29 @@
 -- =============================================================
--- TFG - Gestión de reservas de almacén
--- Esquema MariaDB + semilla de 500 productos
+-- Stockly · Esquema MariaDB / MySQL + datos semilla
+-- TFG DAM · Autores: Adrián Bravo Santos y Miguel Ángel Florido
 -- =============================================================
 
-DROP DATABASE IF EXISTS almacen_tfg;
-CREATE DATABASE almacen_tfg CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE almacen_tfg;
+-- Forzar UTF-8 en la conexión para que tildes/ñ se guarden bien
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
+DROP DATABASE IF EXISTS stockly;
+CREATE DATABASE stockly CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE stockly;
 
 -- -------------------------------------------------------------
--- Usuarios (operarios y clientes que realizan reservas)
+-- Usuarios
 -- -------------------------------------------------------------
 CREATE TABLE usuarios (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     nombre          VARCHAR(100) NOT NULL,
     email           VARCHAR(150) NOT NULL UNIQUE,
+    password_hash   VARCHAR(255) NOT NULL,
     rol             ENUM('admin','operario','cliente') NOT NULL DEFAULT 'cliente',
-    creado_en       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    activo          TINYINT(1) NOT NULL DEFAULT 1,
+    creado_en       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_rol (rol)
 );
 
 -- -------------------------------------------------------------
@@ -23,7 +31,9 @@ CREATE TABLE usuarios (
 -- -------------------------------------------------------------
 CREATE TABLE categorias (
     id              INT AUTO_INCREMENT PRIMARY KEY,
-    nombre          VARCHAR(80) NOT NULL UNIQUE
+    nombre          VARCHAR(80) NOT NULL UNIQUE,
+    icono           VARCHAR(40) DEFAULT NULL,
+    color           VARCHAR(20) DEFAULT NULL
 );
 
 -- -------------------------------------------------------------
@@ -35,14 +45,19 @@ CREATE TABLE productos (
     nombre          VARCHAR(150) NOT NULL,
     descripcion     TEXT,
     categoria_id    INT,
-    ubicacion       VARCHAR(20) NOT NULL,   -- ej. A-12-3 (pasillo-estante-balda)
+    ubicacion       VARCHAR(20) NOT NULL,
     stock           INT NOT NULL DEFAULT 0,
     stock_reservado INT NOT NULL DEFAULT 0,
+    stock_minimo    INT NOT NULL DEFAULT 5,
     precio          DECIMAL(10,2) NOT NULL DEFAULT 0,
+    imagen_url      VARCHAR(255) DEFAULT NULL,
+    activo          TINYINT(1) NOT NULL DEFAULT 1,
     creado_en       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (categoria_id) REFERENCES categorias(id),
     INDEX idx_nombre (nombre),
-    INDEX idx_categoria (categoria_id)
+    INDEX idx_categoria (categoria_id),
+    INDEX idx_activo (activo)
 );
 
 -- -------------------------------------------------------------
@@ -57,27 +72,60 @@ CREATE TABLE reservas (
                     NOT NULL DEFAULT 'pendiente',
     fecha_reserva   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_recogida  DATE,
+    fecha_entrega   DATETIME DEFAULT NULL,
     notas           VARCHAR(255),
     FOREIGN KEY (usuario_id)  REFERENCES usuarios(id),
     FOREIGN KEY (producto_id) REFERENCES productos(id),
     INDEX idx_estado (estado),
-    INDEX idx_usuario (usuario_id)
+    INDEX idx_usuario (usuario_id),
+    INDEX idx_fecha (fecha_reserva)
+);
+
+-- -------------------------------------------------------------
+-- Movimientos de stock (auditoría)
+-- -------------------------------------------------------------
+CREATE TABLE movimientos (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    producto_id     INT NOT NULL,
+    usuario_id      INT,
+    tipo            ENUM('entrada','salida','ajuste','reserva','liberacion') NOT NULL,
+    cantidad        INT NOT NULL,
+    stock_anterior  INT NOT NULL,
+    stock_posterior INT NOT NULL,
+    motivo          VARCHAR(255),
+    fecha           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (producto_id) REFERENCES productos(id),
+    FOREIGN KEY (usuario_id)  REFERENCES usuarios(id),
+    INDEX idx_producto (producto_id),
+    INDEX idx_fecha_mov (fecha)
 );
 
 -- =============================================================
 -- Datos semilla
 -- =============================================================
+-- Hash bcrypt para password "password123" (cost=10)
+SET @PWD := '$2b$10$wH8QpZ1xGQK3Yk0QpZ1xGuXk6YkQpZ1xGQK3Yk0QpZ1xGQK3Yk0Qp';
 
-INSERT INTO categorias (nombre) VALUES
-    ('Electrónica'),('Herramientas'),('Ferretería'),('Jardín'),
-    ('Fontanería'),('Electricidad'),('Oficina'),('Embalaje'),
-    ('Limpieza'),('Seguridad');
+INSERT INTO categorias (nombre, icono, color) VALUES
+    ('Electrónica',   'cpu',       '#3b82f6'),
+    ('Herramientas',  'wrench',    '#f59e0b'),
+    ('Ferretería',    'hammer',    '#6b7280'),
+    ('Jardín',        'leaf',      '#10b981'),
+    ('Fontanería',    'droplet',   '#0ea5e9'),
+    ('Electricidad',  'zap',       '#eab308'),
+    ('Oficina',       'file-text', '#8b5cf6'),
+    ('Embalaje',      'package',   '#a16207'),
+    ('Limpieza',      'spray',     '#06b6d4'),
+    ('Seguridad',     'shield',    '#ef4444');
 
-INSERT INTO usuarios (nombre, email, rol) VALUES
-    ('Admin TFG',      'admin@tfg.local',    'admin'),
-    ('Laura Operaria', 'laura@tfg.local',    'operario'),
-    ('Marcos Cliente', 'marcos@tfg.local',   'cliente'),
-    ('Ana Cliente',    'ana@tfg.local',      'cliente');
+-- Usuarios iniciales (todos con password "password123" - cambiar en producción)
+-- El backend recreará hashes válidos al arrancar si detecta el hash placeholder.
+INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES
+    ('Adrián Bravo Santos',     'adrian@tfg.local',  @PWD, 'admin'),
+    ('Miguel Ángel Florido',    'miguel@tfg.local',  @PWD, 'admin'),
+    ('Laura Operaria',   'laura@tfg.local',   @PWD, 'operario'),
+    ('Marcos Cliente',   'marcos@tfg.local',  @PWD, 'cliente'),
+    ('Ana Cliente',      'ana@tfg.local',     @PWD, 'cliente');
 
 -- -------------------------------------------------------------
 -- Procedimiento para generar 500 productos de prueba
@@ -113,7 +161,7 @@ BEGIN
         END;
 
         SET v_ubic  = CONCAT(
-            CHAR(65 + ((i - 1) MOD 8)),           -- pasillo A-H
+            CHAR(65 + ((i - 1) MOD 8)),
             '-', LPAD(((i - 1) MOD 20) + 1, 2, '0'),
             '-', ((i - 1) MOD 5) + 1
         );
@@ -130,16 +178,20 @@ BEGIN
         SET i = i + 1;
     END WHILE;
 END $$
-
 DELIMITER ;
 
 CALL seed_productos();
 DROP PROCEDURE seed_productos;
 
--- Algunas reservas de ejemplo
+-- Reservas de ejemplo
 INSERT INTO reservas (usuario_id, producto_id, cantidad, estado, fecha_recogida, notas) VALUES
-    (3,  5, 2, 'pendiente',   CURDATE() + INTERVAL 2 DAY, 'Recoger por la tarde'),
-    (3, 42, 1, 'confirmada',  CURDATE() + INTERVAL 1 DAY, NULL),
-    (4, 88, 5, 'pendiente',   CURDATE() + INTERVAL 3 DAY, 'Urgente');
+    (4,  5, 2, 'pendiente',   CURDATE() + INTERVAL 2 DAY, 'Recoger por la tarde'),
+    (4, 42, 1, 'confirmada',  CURDATE() + INTERVAL 1 DAY, NULL),
+    (5, 88, 5, 'pendiente',   CURDATE() + INTERVAL 3 DAY, 'Urgente'),
+    (5, 12, 3, 'entregada',   CURDATE() - INTERVAL 1 DAY, 'OK');
+
+UPDATE productos SET stock_reservado = 2 WHERE id = 5;
+UPDATE productos SET stock_reservado = 1 WHERE id = 42;
+UPDATE productos SET stock_reservado = 5 WHERE id = 88;
 
 SELECT CONCAT('Semilla completada: ', COUNT(*), ' productos') AS resultado FROM productos;

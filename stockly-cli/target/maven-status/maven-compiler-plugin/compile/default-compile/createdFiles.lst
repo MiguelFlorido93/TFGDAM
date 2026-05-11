@@ -1,0 +1,13 @@
+com\stockly\cli\commands\LoginCommand.class
+com\stockly\cli\config\Config.class
+com\stockly\cli\api\StocklyClient.class
+com\stockly\cli\commands\LowStockCommand.class
+com\stockly\cli\commands\ProductsCommand.class
+com\stockly\cli\commands\Args.class
+com\stockly\cli\commands\ImportCommand$Row.class
+com\stockly\cli\commands\ImportCommand.class
+com\stockly\cli\commands\ConfigCommand.class
+com\stockly\cli\commands\ReserveCommand.class
+com\stockly\cli\Main.class
+com\stockly\cli\api\ApiException.class
+com\stockly\cli\commands\Command.class

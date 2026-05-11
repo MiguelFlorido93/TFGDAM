@@ -82,6 +82,94 @@ function debounce(fn, ms = 250) {
 }
 
 // =============================================================
+// Skeleton loaders
+// =============================================================
+function skLine(extra = '')   { return el('span', { class: 'skeleton sk-line ' + extra }); }
+function skBlock(style = '')  { return el('span', { class: 'skeleton sk-block', style }); }
+function skPill()             { return el('span', { class: 'skeleton sk-pill' }); }
+
+function skeletonProductos(count = 8) {
+    const grid = $('#productos-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        grid.append(el('div', { class: 'card skeleton-card' },
+            skLine('short'),
+            skLine('long'),
+            skLine('medium'),
+            skLine('short'),
+            skLine('medium'),
+            skLine('short')
+        ));
+    }
+    $('#prod-count').textContent = '';
+}
+
+function skeletonReservas(count = 5) {
+    const cont = $('#reservas-lista');
+    if (!cont) return;
+    cont.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        cont.append(el('div', { class: 'reserva skeleton-card' },
+            el('div', { class: 'info' },
+                skLine('long'),
+                skLine('medium'),
+                skLine('short')
+            ),
+            skPill(),
+            el('div', {})
+        ));
+    }
+}
+
+function skeletonTabla(selector, cols, rows = 6) {
+    const tbody = $(selector);
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    for (let i = 0; i < rows; i++) {
+        const tr = el('tr', { class: 'skeleton-card' });
+        for (let j = 0; j < cols; j++) {
+            tr.append(el('td', {}, el('span', { class: 'skeleton sk-line ' + (j === cols - 1 ? 'short' : '') })));
+        }
+        tbody.append(tr);
+    }
+}
+
+function skeletonDashboard() {
+    ['st-productos','st-stock-bajo','st-usuarios','st-pendientes','st-entregadas','st-valor'].forEach(id => {
+        const n = $('#'+id); if (!n) return;
+        n.innerHTML = '';
+        n.append(el('span', { class: 'skeleton sk-line', style: 'display:inline-block;width:84px;height:1.6rem' }));
+    });
+    ['chart-reservas','chart-categorias'].forEach(id => {
+        const c = $('#'+id); if (!c) return;
+        c.innerHTML = '';
+        c.append(el('span', { class: 'skeleton sk-block', style: 'height:200px' }));
+    });
+    const top = $('#top-productos'); if (top) {
+        top.innerHTML = '';
+        for (let i = 0; i < 5; i++) {
+            top.append(el('div', { class: 'rank-row skeleton-card' },
+                el('span', { class: 'skeleton sk-line short', style: 'width:36px' }),
+                el('div', { style: 'flex:1' }, skLine('long'), skLine('short')),
+                skPill()
+            ));
+        }
+    }
+    const mov = $('#movimientos'); if (mov) {
+        mov.innerHTML = '';
+        for (let i = 0; i < 6; i++) {
+            mov.append(el('div', { class: 'mov-row skeleton-card' },
+                el('span', { class: 'skeleton sk-line short' }),
+                el('span', { class: 'skeleton sk-line long' }),
+                el('span', { class: 'skeleton sk-line short' }),
+                el('span', { class: 'skeleton sk-line short' })
+            ));
+        }
+    }
+}
+
+// =============================================================
 // Autenticación
 // =============================================================
 async function login(email, password) {
@@ -162,6 +250,7 @@ async function cargarCategorias() {
 }
 
 async function cargarProductos() {
+    skeletonProductos();
     const params = new URLSearchParams({
         page: state.page, limit: state.limit,
         search: state.search, categoria: state.categoria,
@@ -261,6 +350,7 @@ async function confirmarReserva() {
 // Reservas
 // =============================================================
 async function cargarReservas() {
+    skeletonReservas();
     const params = new URLSearchParams();
     if (state.reservaFiltro) params.set('estado', state.reservaFiltro);
     try {
@@ -309,7 +399,15 @@ async function cambiarEstadoReserva(id, estado) {
 }
 
 async function cancelarReserva(id) {
-    if (!confirm('¿Cancelar esta reserva?')) return;
+    const ok = await confirmar({
+        titulo: 'Cancelar reserva',
+        mensaje: `¿Seguro que quieres cancelar la reserva #${id}? El stock volverá a estar disponible.`,
+        ok: 'Sí, cancelar',
+        cancel: 'Volver',
+        peligroso: true,
+        icono: '✕'
+    });
+    if (!ok) return;
     try {
         await api(`/reservas/${id}`, { method: 'DELETE' });
         toast('Reserva cancelada', 'ok');
@@ -321,6 +419,7 @@ async function cancelarReserva(id) {
 // Dashboard
 // =============================================================
 async function cargarDashboard() {
+    skeletonDashboard();
     try {
         const s = await api('/admin/stats');
         $('#st-productos').textContent  = fmt(s.totales.productos);
@@ -381,6 +480,7 @@ function renderBarChart(sel, data) {
 // Inventario (admin)
 // =============================================================
 async function cargarInventario() {
+    skeletonTabla('#inv-body', 9);
     const f = state.invFiltro;
     const params = new URLSearchParams({
         limit: 100, search: f.search, categoria: f.categoria,
@@ -472,7 +572,15 @@ async function abrirModalProducto(p) {
 }
 
 async function eliminarProducto(id) {
-    if (!confirm('¿Dar de baja este producto?')) return;
+    const ok = await confirmar({
+        titulo: 'Dar de baja producto',
+        mensaje: 'El producto dejará de aparecer en el catálogo y no podrá reservarse. Los movimientos históricos se conservan.',
+        ok: 'Dar de baja',
+        cancel: 'Cancelar',
+        peligroso: true,
+        icono: '🗑'
+    });
+    if (!ok) return;
     try { await api('/productos/' + id, { method: 'DELETE' }); toast('Producto dado de baja', 'ok'); cargarInventario(); }
     catch (e) { toast(e.message, 'error'); }
 }
@@ -482,6 +590,7 @@ async function eliminarProducto(id) {
 // =============================================================
 async function cargarUsuarios() {
     if (state.user.rol !== 'admin') return;
+    skeletonTabla('#usr-body', 6);
     try {
         const data = await api('/admin/usuarios');
         const tbody = $('#usr-body'); tbody.innerHTML = '';
@@ -552,6 +661,66 @@ function abrirModalUsuario(u) {
 // =============================================================
 function abrirModal()  { $('#modal').classList.remove('hidden'); }
 function cerrarModal() { $('#modal').classList.add('hidden'); }
+
+/**
+ * Modal de confirmación con look industrial. Devuelve Promise<boolean>.
+ * @param {object} opts
+ * @param {string} opts.titulo
+ * @param {string} opts.mensaje  — texto plano, se escapa al renderizar
+ * @param {string} [opts.ok='Confirmar']
+ * @param {string} [opts.cancel='Cancelar']
+ * @param {boolean} [opts.peligroso=false] — si true, el botón principal es btn-danger
+ * @param {string} [opts.icono='⚠']
+ */
+function confirmar(opts) {
+    return new Promise(resolve => {
+        const {
+            titulo = 'Confirmar',
+            mensaje = '',
+            ok = 'Confirmar',
+            cancel = 'Cancelar',
+            peligroso = false,
+            icono = '⚠'
+        } = opts || {};
+
+        // Guarda handlers globales del modal para restaurarlos al cerrar
+        const prevCloseHandler = $('#modal-cerrar').onclick;
+        const prevModalHandler = $('#modal').onclick;
+
+        $('#modal-titulo').textContent = titulo;
+        $('#modal-body').innerHTML = `
+            <div class="confirm-body">
+                <div class="confirm-icon ${peligroso ? 'danger' : ''}">${esc(icono)}</div>
+                <p class="confirm-msg">${esc(mensaje)}</p>
+            </div>
+        `;
+        $('#modal-foot').innerHTML = `
+            <button class="btn btn-ghost"   id="confirm-cancel">${esc(cancel)}</button>
+            <button class="btn ${peligroso ? 'btn-danger' : 'btn-primary'}" id="confirm-ok">${esc(ok)}</button>
+        `;
+
+        const onKey = e => { if (e.key === 'Escape') cerrar(false); };
+
+        const cerrar = (valor) => {
+            document.removeEventListener('keydown', onKey);
+            $('#modal-cerrar').onclick = prevCloseHandler;
+            $('#modal').onclick        = prevModalHandler;
+            cerrarModal();
+            // Permite que la animación de cierre acabe antes de resolver
+            setTimeout(() => resolve(valor), 50);
+        };
+
+        $('#confirm-ok').onclick     = () => cerrar(true);
+        $('#confirm-cancel').onclick = () => cerrar(false);
+        $('#modal-cerrar').onclick   = () => cerrar(false);
+        $('#modal').onclick          = e => { if (e.target.id === 'modal') cerrar(false); };
+        document.addEventListener('keydown', onKey);
+
+        abrirModal();
+        // Auto-foco en el botón principal para Enter directo
+        setTimeout(() => $('#confirm-ok')?.focus(), 60);
+    });
+}
 
 // =============================================================
 // Tema

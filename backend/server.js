@@ -3,6 +3,13 @@
 // TFG DAM · Autores: Adrián Bravo Santos y Miguel Ángel Florido
 // =============================================================
 require('dotenv').config();
+
+// --- Asegura un JWT_SECRET fuerte antes de cargar nada que dependa de él ---
+// Si .env tiene el placeholder de la plantilla o no tiene secreto, generamos
+// uno aleatorio (64 bytes hex = 128 chars) y lo persistimos en .env para que
+// sobreviva a reinicios (si no, todos los tokens se invalidarían cada vez).
+require('./src/ensure-jwt-secret')();
+
 const path       = require('path');
 const express    = require('express');
 const cors       = require('cors');

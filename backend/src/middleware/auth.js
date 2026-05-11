@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
 
-const SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+// server.js llama a ensure-jwt-secret antes de cargar este módulo, así que a
+// estas alturas process.env.JWT_SECRET siempre debe existir y ser fuerte.
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET ausente o débil. Revisa backend/.env.');
+}
+const SECRET = process.env.JWT_SECRET;
 const EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
 function signToken(user) {

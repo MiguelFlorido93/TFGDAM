@@ -1466,6 +1466,90 @@ input, select, textarea {
     .fab { right: calc(1.5rem + 64px); }
 }
 
+/* ============================================================
+   Skeleton loaders — placas de acero con reflejo recorriéndolas
+   ============================================================ */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: rgba(15,23,42,.12);
+    border-radius: var(--radius-sm);
+    display: inline-block;
+    color: transparent;
+    user-select: none;
+    isolation: isolate;
+    vertical-align: middle;
+}
+[data-theme="dark"] .skeleton, :root:not([data-theme="light"]) .skeleton {
+    background: rgba(255,255,255,.08);
+}
+.skeleton::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,.55) 50%,
+        transparent 100%);
+    transform: translateX(-100%);
+    animation: shimmer 1.4s linear infinite;
+}
+[data-theme="dark"] .skeleton::after, :root:not([data-theme="light"]) .skeleton::after {
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,.15) 50%,
+        transparent 100%);
+}
+@keyframes shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
+.sk-line       { display: block; height: .85rem; margin: .35rem 0; border-radius: var(--radius-sm); width: 100%; }
+.sk-line.short  { width: 35%; }
+.sk-line.medium { width: 60%; }
+.sk-line.long   { width: 85%; }
+.sk-block      { display: block; width: 100%; height: 100%; }
+.sk-pill       { display: inline-block; width: 80px; height: 22px; border-radius: var(--radius-pill); }
+
+.skeleton-card {
+    /* Mantiene el aspecto de card pero anula el hover dramático */
+    pointer-events: none;
+}
+
+/* ============================================================
+   Modal de confirmación
+   ============================================================ */
+.confirm-body {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1.1rem; padding: .5rem 0;
+    text-align: center;
+}
+.confirm-icon {
+    width: 72px; height: 72px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; line-height: 1;
+    border-radius: var(--radius);
+    background-image: var(--amber-shine), var(--steel-grain), var(--amber-light);
+    background-blend-mode: overlay, overlay, normal;
+    box-shadow: var(--amber-bevel), 0 10px 24px -8px rgba(138,77,10,.6);
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,.45);
+    position: relative;
+}
+.confirm-icon.danger {
+    background-image: var(--amber-shine), var(--steel-grain),
+        linear-gradient(180deg, #3a0a0a 0%, #f87171 14%, #991b1b 44%, #dc2626 65%, #2a0606 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.45),
+        inset 0 -1px 0 rgba(0,0,0,.55),
+        inset 1px 0 0 rgba(255,255,255,.20),
+        inset -1px 0 0 rgba(0,0,0,.30),
+        0 10px 24px -8px rgba(220,38,38,.6);
+}
+.confirm-msg {
+    color: var(--c-text);
+    font-size: 1rem; line-height: 1.5;
+    max-width: 36ch;
+}
+
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

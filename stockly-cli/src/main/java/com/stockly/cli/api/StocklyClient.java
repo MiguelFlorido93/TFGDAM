@@ -96,7 +96,10 @@ public class StocklyClient {
             JsonNode json = text == null || text.isBlank() ? JSON.nullNode() : JSON.readTree(text);
 
             if (code >= 200 && code < 300) return json;
-            String err = json.path("error").asText("HTTP " + code);
+            String err = json.path("error").asText();
+            if (err == null || err.isBlank()) {
+                err = "HTTP " + code;
+            }
             throw new ApiException(code, err);
 
         } catch (IOException e) {

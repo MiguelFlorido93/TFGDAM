@@ -10,14 +10,14 @@ require('dotenv').config();
 // sobreviva a reinicios (si no, todos los tokens se invalidarían cada vez).
 require('./src/ensure-jwt-secret')();
 
-const path       = require('path');
-const express    = require('express');
-const cors       = require('cors');
-const helmet     = require('helmet');
-const morgan     = require('morgan');
+const path = require('path');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
 const compression = require('compression');
-const rateLimit  = require('express-rate-limit');
-const bcrypt     = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
 
 const pool = require('./src/db');
 
@@ -30,13 +30,18 @@ app.use(cors());
 app.use(express.json({ limit: '4mb' })); // 4mb cubre imports CSV de hasta ~2000 productos
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
-// Rate limit en /api/auth para evitar fuerza bruta
-app.use('/api/auth', rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 30,
-    standardHeaders: true,
-    legacyHeaders: false
-}));
+// Rate limit en /api/auth para evitar fuerza bruta (deshabilitado en tests)
+if (process.env.NODE_ENV !== 'test') {
+    app.use(
+        '/api/auth',
+        rateLimit({
+            windowMs: 15 * 60 * 1000,
+            max: 30,
+            standardHeaders: true,
+            legacyHeaders: false,
+        })
+    );
+}
 
 // ---------- Frontend estático ----------
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
@@ -51,11 +56,11 @@ app.get('/api/health', async (_req, res) => {
     }
 });
 
-app.use('/api/auth',       require('./src/routes/auth'));
+app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/categorias', require('./src/routes/categorias'));
-app.use('/api/productos',  require('./src/routes/productos'));
-app.use('/api/reservas',   require('./src/routes/reservas'));
-app.use('/api/admin',      require('./src/routes/admin'));
+app.use('/api/productos', require('./src/routes/productos'));
+app.use('/api/reservas', require('./src/routes/reservas'));
+app.use('/api/admin', require('./src/routes/admin'));
 
 // Error handler genérico
 app.use((err, _req, res, _next) => {
@@ -72,17 +77,22 @@ async function ensureSeedHashes() {
         const needsFix = users.filter(u => u.password_hash === placeholder || !validRegex.test(u.password_hash || ''));
         if (!needsFix.length) return;
         const hash = await bcrypt.hash('password123', 10);
-        await pool.query('UPDATE usuarios SET password_hash = ? WHERE id IN (?)',
-            [hash, needsFix.map(u => u.id)]);
+        await pool.query('UPDATE usuarios SET password_hash = ? WHERE id IN (?)', [hash, needsFix.map(u => u.id)]);
         console.log(`🔐 ${needsFix.length} usuarios semilla con password "password123"`);
     } catch (e) {
         console.warn('No se pudo verificar hashes semilla:', e.message);
     }
 }
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, async () => {
-    console.log(`🚀 Stockly API → http://localhost:${PORT}`);
-    console.log(`🌐 Frontend       → http://localhost:${PORT}/`);
-    await ensureSeedHashes();
-});
+// Sólo abrir puerto si se ejecuta directamente (node server.js).
+// Cuando los tests importan el módulo, el `app` se exporta sin escuchar.
+if (require.main === module) {
+    const PORT = process.env.PORT || 3001;
+    app.listen(PORT, async () => {
+        console.log(`🚀 Stockly API → http://localhost:${PORT}`);
+        console.log(`🌐 Frontend       → http://localhost:${PORT}/`);
+        await ensureSeedHashes();
+    });
+}
+
+module.exports = { app, ensureSeedHashes };

@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('../db');
 const { authRequired, requireRole } = require('../middleware/auth');
 
-router.use(authRequired, requireRole('admin','operario'));
+router.use(authRequired, requireRole('admin', 'operario'));
 
 // GET /api/admin/stats - dashboard
 router.get('/stats', async (_req, res) => {
@@ -36,7 +36,8 @@ router.get('/stats', async (_req, res) => {
 // ----- Usuarios (admin solo) -----
 router.get('/usuarios', requireRole('admin'), async (_req, res) => {
     const [rows] = await pool.query(
-        'SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY creado_en DESC');
+        'SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY creado_en DESC'
+    );
     res.json(rows);
 });
 
@@ -45,9 +46,12 @@ router.post('/usuarios', requireRole('admin'), async (req, res) => {
     if (!nombre || !email || !password) return res.status(400).json({ error: 'Faltan campos' });
     try {
         const hash = await bcrypt.hash(password, 10);
-        const [r] = await pool.query(
-            'INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)',
-            [nombre, email, hash, rol]);
+        const [r] = await pool.query('INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)', [
+            nombre,
+            email,
+            hash,
+            rol,
+        ]);
         res.status(201).json({ id: r.insertId });
     } catch (e) {
         if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Email duplicado' });
@@ -67,20 +71,24 @@ router.put('/usuarios/:id', requireRole('admin'), async (req, res) => {
             activo = COALESCE(?, activo),
             password_hash = COALESCE(?, password_hash)
          WHERE id = ?`,
-        [nombre, email, rol, activo, hash, req.params.id]);
+        [nombre, email, rol, activo, hash, req.params.id]
+    );
     res.json({ ok: true });
 });
 
 // ----- Movimientos -----
 router.get('/movimientos', async (req, res) => {
     const limit = Math.min(200, parseInt(req.query.limit || '50', 10));
-    const [rows] = await pool.query(`
+    const [rows] = await pool.query(
+        `
         SELECT m.id, m.tipo, m.cantidad, m.stock_anterior, m.stock_posterior, m.motivo, m.fecha,
                p.sku, p.nombre AS producto, u.nombre AS usuario
           FROM movimientos m
           JOIN productos p ON p.id = m.producto_id
           LEFT JOIN usuarios u ON u.id = m.usuario_id
-         ORDER BY m.fecha DESC LIMIT ?`, [limit]);
+         ORDER BY m.fecha DESC LIMIT ?`,
+        [limit]
+    );
     res.json(rows);
 });
 
@@ -104,27 +112,40 @@ router.get('/export/reservas.csv', async (_req, res) => {
           JOIN usuarios u ON u.id = r.usuario_id
           JOIN productos p ON p.id = r.producto_id
          ORDER BY r.fecha_reserva DESC`);
-    const csv = toCSV(rows, ['id','usuario','sku','producto','cantidad','estado','fecha_reserva','fecha_recogida']);
+    const csv = toCSV(rows, [
+        'id',
+        'usuario',
+        'sku',
+        'producto',
+        'cantidad',
+        'estado',
+        'fecha_reserva',
+        'fecha_recogida',
+    ]);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="reservas.csv"');
-    res.send('﻿' + csv);   // BOM para Excel
+    res.send('﻿' + csv); // BOM para Excel
 });
 
 // Export CSV de inventario, respetando filtros opcionales por query
 //   ?search=...&categoria=ID&stock_bajo=1&include_inactivos=1
 router.get('/export/inventario.csv', async (req, res) => {
-    const where  = [];
+    const where = [];
     const params = [];
     if (req.query.include_inactivos !== '1') where.push('p.activo = 1');
     if (req.query.search) {
         where.push('(p.nombre LIKE ? OR p.sku LIKE ?)');
         params.push(`%${req.query.search}%`, `%${req.query.search}%`);
     }
-    if (req.query.categoria) { where.push('p.categoria_id = ?'); params.push(parseInt(req.query.categoria, 10)); }
+    if (req.query.categoria) {
+        where.push('p.categoria_id = ?');
+        params.push(parseInt(req.query.categoria, 10));
+    }
     if (req.query.stock_bajo === '1') where.push('(p.stock - p.stock_reservado) <= p.stock_minimo');
     const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
 
-    const [rows] = await pool.query(`
+    const [rows] = await pool.query(
+        `
         SELECT p.sku, p.nombre, p.descripcion,
                COALESCE(c.nombre, '') AS categoria,
                p.ubicacion,
@@ -136,17 +157,28 @@ router.get('/export/inventario.csv', async (req, res) => {
           FROM productos p
           LEFT JOIN categorias c ON c.id = p.categoria_id
           ${whereSql}
-          ORDER BY p.sku`, params);
+          ORDER BY p.sku`,
+        params
+    );
 
     const csv = toCSV(rows, [
-        'sku','nombre','descripcion','categoria','ubicacion',
-        'stock','stock_reservado','stock_disponible','stock_minimo',
-        'precio','valor_total','activo'
+        'sku',
+        'nombre',
+        'descripcion',
+        'categoria',
+        'ubicacion',
+        'stock',
+        'stock_reservado',
+        'stock_disponible',
+        'stock_minimo',
+        'precio',
+        'valor_total',
+        'activo',
     ]);
-    const stamp = new Date().toISOString().slice(0,10);
+    const stamp = new Date().toISOString().slice(0, 10);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="inventario-${stamp}.csv"`);
-    res.send('﻿' + csv);   // BOM para que Excel respete acentos
+    res.send('﻿' + csv); // BOM para que Excel respete acentos
 });
 
 module.exports = router;

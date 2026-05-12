@@ -1,4 +1,38 @@
+# Dependencias
 node_modules/
+**/node_modules/
+
+# Variables de entorno y secretos
 .env
+.env.local
+backend/.env
+
+# Builds y artefactos
+target/
+**/target/
+dist/
+build/
+
+# Java
+*.class
+.idea/
+*.iml
+.vscode/
+
+# Logs y temporales
 *.log
+*.tmp
+.cache/
+
+# Sistema
 .DS_Store
+Thumbs.db
+
+# Editores
+*~
+.swp
+.swo
+
+# Datos locales generados en runtime
+*.sqlite
+*.sqlite-journal

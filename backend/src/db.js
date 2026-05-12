@@ -1,15 +1,15 @@
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-    host:     process.env.DB_HOST     || 'localhost',
-    port:     process.env.DB_PORT     || 3306,
-    user:     process.env.DB_USER     || 'root',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 3306,
+    user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME     || 'stockly',
+    database: process.env.DB_NAME || 'stockly',
     waitForConnections: true,
     connectionLimit: 10,
     namedPlaceholders: true,
-    charset: 'utf8mb4'
+    charset: 'utf8mb4',
 });
 
 module.exports = pool;

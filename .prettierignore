@@ -1,0 +1,26 @@
+# Dependencias y build outputs
+node_modules/
+**/node_modules/
+target/
+**/target/
+dist/
+build/
+
+# Generados por sembradores y schema dumps
+db/schema.sql
+
+# Java
+stockly-cli/
+
+# Lockfiles
+package-lock.json
+**/package-lock.json
+
+# Logs
+*.log
+
+# Docs (mantenidos a mano)
+docs/
+
+# Configuración del cliente que generamos en runtime
+backend/.env

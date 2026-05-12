@@ -9,11 +9,9 @@ const SECRET = process.env.JWT_SECRET;
 const EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
 function signToken(user) {
-    return jwt.sign(
-        { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol },
-        SECRET,
-        { expiresIn: EXPIRES_IN }
-    );
+    return jwt.sign({ id: user.id, nombre: user.nombre, email: user.email, rol: user.rol }, SECRET, {
+        expiresIn: EXPIRES_IN,
+    });
 }
 
 function authRequired(req, res, next) {
@@ -23,7 +21,7 @@ function authRequired(req, res, next) {
     try {
         req.user = jwt.verify(token, SECRET);
         next();
-    } catch (e) {
+    } catch {
         return res.status(401).json({ error: 'Token inválido o expirado' });
     }
 }

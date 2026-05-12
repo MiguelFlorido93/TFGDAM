@@ -11,7 +11,7 @@ const PLACEHOLDERS = new Set([
     'cambia-esto-por-una-cadena-larga-y-aleatoria',
     'dev-secret-change-me',
     'change-me',
-    'secret'
+    'secret',
 ]);
 const MIN_LEN = 32;
 
@@ -29,7 +29,11 @@ function generarSecreto() {
 
 function actualizarEnv(envPath, key, value) {
     let texto = '';
-    try { texto = fs.readFileSync(envPath, 'utf8'); } catch { /* sin fichero */ }
+    try {
+        texto = fs.readFileSync(envPath, 'utf8');
+    } catch {
+        /* sin fichero */
+    }
 
     const linea = `${key}=${value}`;
     const re = new RegExp(`^${key}=.*$`, 'm');
@@ -38,8 +42,7 @@ function actualizarEnv(envPath, key, value) {
     if (re.test(texto)) {
         nuevo = texto.replace(re, linea);
     } else {
-        nuevo = texto.length && !texto.endsWith('\n') ? texto + '\n' + linea + '\n'
-                                                       : texto + linea + '\n';
+        nuevo = texto.length && !texto.endsWith('\n') ? texto + '\n' + linea + '\n' : texto + linea + '\n';
     }
     fs.writeFileSync(envPath, nuevo, 'utf8');
 }

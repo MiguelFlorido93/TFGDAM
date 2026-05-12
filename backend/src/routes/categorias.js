@@ -7,7 +7,8 @@ router.get('/', async (_req, res) => {
     const [rows] = await pool.query(
         `SELECT c.id, c.nombre, c.icono, c.color,
                 (SELECT COUNT(*) FROM productos p WHERE p.categoria_id = c.id AND p.activo = 1) AS productos
-           FROM categorias c ORDER BY c.nombre`);
+           FROM categorias c ORDER BY c.nombre`
+    );
     res.json(rows);
 });
 
@@ -16,9 +17,11 @@ router.post('/', authRequired, requireRole('admin'), async (req, res) => {
     const { nombre, icono, color } = req.body || {};
     if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'Nombre obligatorio' });
     try {
-        const [r] = await pool.query(
-            'INSERT INTO categorias (nombre, icono, color) VALUES (?, ?, ?)',
-            [nombre.trim(), icono || null, color || null]);
+        const [r] = await pool.query('INSERT INTO categorias (nombre, icono, color) VALUES (?, ?, ?)', [
+            nombre.trim(),
+            icono || null,
+            color || null,
+        ]);
         res.status(201).json({ id: r.insertId });
     } catch (e) {
         if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Esa categoría ya existe' });
@@ -34,10 +37,17 @@ router.patch('/:id', authRequired, requireRole('admin'), async (req, res) => {
 
     if (nombre !== undefined) {
         if (!String(nombre).trim()) return res.status(400).json({ error: 'Nombre no puede estar vacío' });
-        cambios.push('nombre = ?'); valores.push(String(nombre).trim());
+        cambios.push('nombre = ?');
+        valores.push(String(nombre).trim());
     }
-    if (icono !== undefined) { cambios.push('icono = ?'); valores.push(icono || null); }
-    if (color !== undefined) { cambios.push('color = ?'); valores.push(color || null); }
+    if (icono !== undefined) {
+        cambios.push('icono = ?');
+        valores.push(icono || null);
+    }
+    if (color !== undefined) {
+        cambios.push('color = ?');
+        valores.push(color || null);
+    }
     if (!cambios.length) return res.status(400).json({ error: 'No hay cambios' });
 
     try {
@@ -60,13 +70,12 @@ router.delete('/:id', authRequired, requireRole('admin'), async (req, res) => {
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
-        const [[{ n }]] = await conn.query(
-            'SELECT COUNT(*) AS n FROM productos WHERE categoria_id = ?', [id]);
+        const [[{ n }]] = await conn.query('SELECT COUNT(*) AS n FROM productos WHERE categoria_id = ?', [id]);
         if (n > 0 && !force) {
             await conn.rollback();
             return res.status(409).json({
                 error: `La categoría tiene ${n} producto(s). Usa fusionar o ?force=true para desasignarlos.`,
-                productos: n
+                productos: n,
             });
         }
         if (n > 0) {
@@ -89,19 +98,26 @@ router.delete('/:id', authRequired, requireRole('admin'), async (req, res) => {
 router.post('/:id/merge', authRequired, requireRole('admin'), async (req, res) => {
     const origen = parseInt(req.params.id, 10);
     const destino = parseInt(req.body?.destino_id, 10);
-    if (!destino || destino === origen)
-        return res.status(400).json({ error: 'destino_id no válido' });
+    if (!destino || destino === origen) return res.status(400).json({ error: 'destino_id no válido' });
 
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
         const [[catDest]] = await conn.query('SELECT id FROM categorias WHERE id = ?', [destino]);
-        if (!catDest) { await conn.rollback(); return res.status(404).json({ error: 'Categoría destino no existe' }); }
+        if (!catDest) {
+            await conn.rollback();
+            return res.status(404).json({ error: 'Categoría destino no existe' });
+        }
 
-        const [r1] = await conn.query(
-            'UPDATE productos SET categoria_id = ? WHERE categoria_id = ?', [destino, origen]);
+        const [r1] = await conn.query('UPDATE productos SET categoria_id = ? WHERE categoria_id = ?', [
+            destino,
+            origen,
+        ]);
         const [r2] = await conn.query('DELETE FROM categorias WHERE id = ?', [origen]);
-        if (!r2.affectedRows) { await conn.rollback(); return res.status(404).json({ error: 'Categoría origen no existe' }); }
+        if (!r2.affectedRows) {
+            await conn.rollback();
+            return res.status(404).json({ error: 'Categoría origen no existe' });
+        }
 
         await conn.commit();
         res.json({ ok: true, productos_movidos: r1.affectedRows });

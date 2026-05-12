@@ -10,7 +10,8 @@ const { authRequired, requireRole } = require('../middleware/auth');
 async function transitarReserva(conn, id, accion, user) {
     const [[r]] = await conn.query(
         'SELECT usuario_id, producto_id, cantidad, estado FROM reservas WHERE id = ? FOR UPDATE',
-        [id]);
+        [id]
+    );
     if (!r) throw new Error('Reserva no encontrada');
 
     if (accion === 'cancelar') {
@@ -18,18 +19,20 @@ async function transitarReserva(conn, id, accion, user) {
         if (r.estado === 'cancelada') throw new Error('Ya cancelada');
         if (r.estado === 'entregada') throw new Error('Ya entregada');
         await conn.query("UPDATE reservas SET estado = 'cancelada' WHERE id = ?", [id]);
-        await conn.query(
-            'UPDATE productos SET stock_reservado = GREATEST(0, stock_reservado - ?) WHERE id = ?',
-            [r.cantidad, r.producto_id]);
+        await conn.query('UPDATE productos SET stock_reservado = GREATEST(0, stock_reservado - ?) WHERE id = ?', [
+            r.cantidad,
+            r.producto_id,
+        ]);
         await conn.query(
             `INSERT INTO movimientos (producto_id, usuario_id, tipo, cantidad, stock_anterior, stock_posterior, motivo)
              VALUES (?, ?, 'liberacion', ?, 0, 0, ?)`,
-            [r.producto_id, user.id, r.cantidad, `Cancelación reserva #${id}`]);
+            [r.producto_id, user.id, r.cantidad, `Cancelación reserva #${id}`]
+        );
         return;
     }
 
     // confirmar / entregar requieren staff
-    if (!['admin','operario'].includes(user.rol)) throw new Error('No autorizado');
+    if (!['admin', 'operario'].includes(user.rol)) throw new Error('No autorizado');
     if (r.estado === 'cancelada') throw new Error('Reserva cancelada');
 
     if (accion === 'confirmar') {
@@ -40,19 +43,19 @@ async function transitarReserva(conn, id, accion, user) {
 
     if (accion === 'entregar') {
         if (r.estado === 'entregada') throw new Error('Ya entregada');
-        const [[prod]] = await conn.query(
-            'SELECT stock, stock_reservado FROM productos WHERE id = ? FOR UPDATE',
-            [r.producto_id]);
+        const [[prod]] = await conn.query('SELECT stock, stock_reservado FROM productos WHERE id = ? FOR UPDATE', [
+            r.producto_id,
+        ]);
         await conn.query(
             'UPDATE productos SET stock = stock - ?, stock_reservado = GREATEST(0, stock_reservado - ?) WHERE id = ?',
-            [r.cantidad, r.cantidad, r.producto_id]);
-        await conn.query(
-            "UPDATE reservas SET estado = 'entregada', fecha_entrega = NOW() WHERE id = ?",
-            [id]);
+            [r.cantidad, r.cantidad, r.producto_id]
+        );
+        await conn.query("UPDATE reservas SET estado = 'entregada', fecha_entrega = NOW() WHERE id = ?", [id]);
         await conn.query(
             `INSERT INTO movimientos (producto_id, usuario_id, tipo, cantidad, stock_anterior, stock_posterior, motivo)
              VALUES (?, ?, 'salida', ?, ?, ?, ?)`,
-            [r.producto_id, user.id, r.cantidad, prod.stock, prod.stock - r.cantidad, `Entrega reserva #${id}`]);
+            [r.producto_id, user.id, r.cantidad, prod.stock, prod.stock - r.cantidad, `Entrega reserva #${id}`]
+        );
         return;
     }
 
@@ -85,7 +88,9 @@ router.get('/', authRequired, async (req, res) => {
            JOIN productos p ON p.id = r.producto_id
            ${whereSql}
            ORDER BY r.fecha_reserva DESC
-           LIMIT 500`, params);
+           LIMIT 500`,
+        params
+    );
     res.json(rows);
 });
 
@@ -100,8 +105,12 @@ router.post('/', authRequired, async (req, res) => {
         await conn.beginTransaction();
         const [[prod]] = await conn.query(
             'SELECT stock, stock_reservado FROM productos WHERE id = ? AND activo = 1 FOR UPDATE',
-            [producto_id]);
-        if (!prod) { await conn.rollback(); return res.status(404).json({ error: 'Producto inexistente' }); }
+            [producto_id]
+        );
+        if (!prod) {
+            await conn.rollback();
+            return res.status(404).json({ error: 'Producto inexistente' });
+        }
 
         const disponible = prod.stock - prod.stock_reservado;
         if (cantidad > disponible) {
@@ -109,23 +118,28 @@ router.post('/', authRequired, async (req, res) => {
             return res.status(409).json({ error: `Stock insuficiente (disponible: ${disponible})` });
         }
 
-        await conn.query(
-            'UPDATE productos SET stock_reservado = stock_reservado + ? WHERE id = ?',
-            [cantidad, producto_id]);
+        await conn.query('UPDATE productos SET stock_reservado = stock_reservado + ? WHERE id = ?', [
+            cantidad,
+            producto_id,
+        ]);
         const [ins] = await conn.query(
             `INSERT INTO reservas (usuario_id, producto_id, cantidad, fecha_recogida, notas)
              VALUES (?, ?, ?, ?, ?)`,
-            [usuario_id, producto_id, cantidad, fecha_recogida || null, notas || null]);
+            [usuario_id, producto_id, cantidad, fecha_recogida || null, notas || null]
+        );
         await conn.query(
             `INSERT INTO movimientos (producto_id, usuario_id, tipo, cantidad, stock_anterior, stock_posterior, motivo)
              VALUES (?, ?, 'reserva', ?, ?, ?, ?)`,
-            [producto_id, usuario_id, cantidad, prod.stock, prod.stock, `Reserva #${ins.insertId}`]);
+            [producto_id, usuario_id, cantidad, prod.stock, prod.stock, `Reserva #${ins.insertId}`]
+        );
         await conn.commit();
         res.status(201).json({ id: ins.insertId });
     } catch (e) {
         await conn.rollback();
         res.status(500).json({ error: e.message });
-    } finally { conn.release(); }
+    } finally {
+        conn.release();
+    }
 });
 
 // POST /api/reservas/bulk  → aplica una misma acción a varias reservas
@@ -134,7 +148,8 @@ router.post('/bulk', authRequired, async (req, res) => {
     const { ids, accion } = req.body || {};
     if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'ids vacío' });
     if (ids.length > 100) return res.status(400).json({ error: 'Máximo 100 reservas por operación' });
-    if (!['confirmar','entregar','cancelar'].includes(accion)) return res.status(400).json({ error: 'Acción no válida' });
+    if (!['confirmar', 'entregar', 'cancelar'].includes(accion))
+        return res.status(400).json({ error: 'Acción no válida' });
     if (req.user.rol === 'cliente' && accion !== 'cancelar') {
         return res.status(403).json({ error: 'Sólo puedes cancelar tus reservas' });
     }
@@ -150,14 +165,16 @@ router.post('/bulk', authRequired, async (req, res) => {
         } catch (e) {
             await conn.rollback();
             resultados.push({ id, ok: false, error: e.message });
-        } finally { conn.release(); }
+        } finally {
+            conn.release();
+        }
     }
     const aplicadas = resultados.filter(r => r.ok).length;
     res.json({ aplicadas, fallidas: resultados.length - aplicadas, resultados });
 });
 
 // PATCH /api/reservas/:id/estado  (operario/admin) — adaptador al helper
-router.patch('/:id/estado', authRequired, requireRole('admin','operario'), async (req, res) => {
+router.patch('/:id/estado', authRequired, requireRole('admin', 'operario'), async (req, res) => {
     const map = { confirmada: 'confirmar', entregada: 'entregar' };
     const accion = map[req.body?.estado];
     if (!accion) return res.status(400).json({ error: 'Estado inválido' });
@@ -170,7 +187,9 @@ router.patch('/:id/estado', authRequired, requireRole('admin','operario'), async
     } catch (e) {
         await conn.rollback();
         res.status(/no encontrada/i.test(e.message) ? 404 : 400).json({ error: e.message });
-    } finally { conn.release(); }
+    } finally {
+        conn.release();
+    }
 });
 
 // DELETE /api/reservas/:id  (cancelar) — adaptador al helper
@@ -184,11 +203,11 @@ router.delete('/:id', authRequired, async (req, res) => {
     } catch (e) {
         await conn.rollback();
         const m = e.message;
-        const code = /no encontrada/i.test(m) ? 404
-                    : /no autorizado/i.test(m) ? 403
-                    : 400;
+        const code = /no encontrada/i.test(m) ? 404 : /no autorizado/i.test(m) ? 403 : 400;
         res.status(code).json({ error: m });
-    } finally { conn.release(); }
+    } finally {
+        conn.release();
+    }
 });
 
 module.exports = router;

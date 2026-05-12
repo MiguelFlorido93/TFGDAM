@@ -21,7 +21,7 @@ router.post('/login', async (req, res) => {
     const token = signToken(user);
     res.json({
         token,
-        user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol }
+        user: { id: user.id, nombre: user.nombre, email: user.email, rol: user.rol },
     });
 });
 
@@ -65,14 +65,15 @@ router.patch('/me', authRequired, async (req, res) => {
     if (nombre !== undefined) {
         const n = String(nombre).trim();
         if (!n) return res.status(400).json({ error: 'El nombre no puede estar vacío' });
-        cambios.push('nombre = ?'); valores.push(n);
+        cambios.push('nombre = ?');
+        valores.push(n);
     }
 
     if (email !== undefined) {
         const e = String(email).trim().toLowerCase();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
-            return res.status(400).json({ error: 'Email no válido' });
-        cambios.push('email = ?'); valores.push(e);
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return res.status(400).json({ error: 'Email no válido' });
+        cambios.push('email = ?');
+        valores.push(e);
     }
 
     // Cambio de contraseña
@@ -88,7 +89,8 @@ router.patch('/me', authRequired, async (req, res) => {
         if (!ok) return res.status(401).json({ error: 'La contraseña actual no es correcta' });
 
         const hash = await bcrypt.hash(password_nuevo, 10);
-        cambios.push('password_hash = ?'); valores.push(hash);
+        cambios.push('password_hash = ?');
+        valores.push(hash);
     }
 
     if (!cambios.length) return res.status(400).json({ error: 'No hay cambios que aplicar' });
@@ -97,9 +99,7 @@ router.patch('/me', authRequired, async (req, res) => {
         valores.push(userId);
         await pool.query(`UPDATE usuarios SET ${cambios.join(', ')} WHERE id = ?`, valores);
 
-        const [rows] = await pool.query(
-            'SELECT id, nombre, email, rol FROM usuarios WHERE id = ? LIMIT 1', [userId]
-        );
+        const [rows] = await pool.query('SELECT id, nombre, email, rol FROM usuarios WHERE id = ? LIMIT 1', [userId]);
         const user = rows[0];
 
         // Re-emitimos token porque nombre/email viajan dentro del JWT

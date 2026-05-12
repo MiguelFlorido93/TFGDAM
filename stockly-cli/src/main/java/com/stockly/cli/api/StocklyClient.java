@@ -67,6 +67,16 @@ public class StocklyClient {
         return request("GET", "/api/productos/sku-sugerido", null, true);
     }
 
+    public JsonNode reservas() {
+        return request("GET", "/api/reservas", null, true);
+    }
+
+    /** accion ∈ {"confirmar","entregar","cancelar"} */
+    public JsonNode bulkReservas(java.util.List<Integer> ids, String accion) {
+        return request("POST", "/api/reservas/bulk",
+            Map.of("ids", ids, "accion", accion), true);
+    }
+
     // ---------- HTTP core ----------
 
     private JsonNode request(String method, String path, Object body, boolean auth) {

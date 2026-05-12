@@ -3,10 +3,16 @@ C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\Args.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\Command.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\ConfigCommand.java
+C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\GuiCommand.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\ImportCommand.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\LoginCommand.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\LowStockCommand.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\ProductsCommand.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\commands\ReserveCommand.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\config\Config.java
+C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\gui\LoginFrame.java
+C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\gui\MainFrame.java
+C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\gui\ProductsPanel.java
+C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\gui\ReservationsPanel.java
+C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\gui\Theme.java
 C:\Users\practicas\Desktop\Adrián Prácticas\python\TFGDAM\stockly-cli\src\main\java\com\stockly\cli\Main.java

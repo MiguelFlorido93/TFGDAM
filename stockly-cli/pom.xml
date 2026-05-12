@@ -19,6 +19,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <jackson.version>2.17.0</jackson.version>
         <opencsv.version>5.9</opencsv.version>
+        <flatlaf.version>3.5.4</flatlaf.version>
     </properties>
 
     <dependencies>
@@ -33,6 +34,22 @@
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>${opencsv.version}</version>
+        </dependency>
+        <!-- FlatLaf — Look & Feel moderno para Swing -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>${flatlaf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-extras</artifactId>
+            <version>${flatlaf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-intellij-themes</artifactId>
+            <version>${flatlaf.version}</version>
         </dependency>
     </dependencies>
 

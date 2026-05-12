@@ -26,6 +26,7 @@ public final class Main {
         register(new ReserveCommand());
         register(new ImportCommand());
         register(new ConfigCommand());
+        register(new GuiCommand());
     }
     private static void register(Command c) { COMMANDS.put(c.name(), c); }
 

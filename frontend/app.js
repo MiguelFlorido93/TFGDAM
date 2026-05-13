@@ -1970,7 +1970,7 @@ function mostrarAtajos() {
         esAdmin ? ['3', 'Ir a Dashboard'] : null,
         esAdmin ? ['4', 'Ir a Inventario'] : null,
         esAdminPuro ? ['5', 'Ir a Usuarios'] : null,
-        esAdmin ? ['Ctrl + N', 'Nuevo producto'] : null,
+        esAdmin ? ['Alt + N', 'Nuevo producto'] : null,
         ['?', 'Mostrar esta ayuda'],
     ].filter(Boolean);
 
@@ -2029,8 +2029,8 @@ function bindAtajos() {
             return;
         }
 
-        // Ctrl+N: nuevo producto (admin/operario)
-        if (ctrl && (k === 'n' || k === 'N')) {
+        // Alt+N: nuevo producto (admin/operario)
+        if (e.altKey && !ctrl && (k === 'n' || k === 'N')) {
             if (state.user && (state.user.rol === 'admin' || state.user.rol === 'operario')) {
                 e.preventDefault();
                 abrirModalProducto();

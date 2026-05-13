@@ -36,3 +36,6 @@ Thumbs.db
 # Datos locales generados en runtime
 *.sqlite
 *.sqlite-journal
+
+# Instalador local: Node/MySQL/JDK descargados y data de MySQL
+runtime/

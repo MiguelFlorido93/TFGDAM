@@ -57,11 +57,13 @@ async function api(path, opts = {}) {
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (state.token) headers.Authorization = `Bearer ${state.token}`;
     const r = await fetch(`${API}${path}`, { ...opts, headers });
-    if (r.status === 401) {
+    const data = r.headers.get('content-type')?.includes('application/json') ? await r.json() : await r.text();
+    // Solo tratar 401 como sesión expirada si había token activo y NO es el endpoint de login/register.
+    const esEndpointAuth = path === '/auth/login' || path === '/auth/register';
+    if (r.status === 401 && state.token && !esEndpointAuth) {
         cerrarSesion();
         throw new Error('Sesión expirada');
     }
-    const data = r.headers.get('content-type')?.includes('application/json') ? await r.json() : await r.text();
     if (!r.ok) throw new Error(data.error || data || `HTTP ${r.status}`);
     return data;
 }

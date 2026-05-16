@@ -8,14 +8,32 @@ REM Ejecuta npm install y prepara el entorno. Genera install.log con la
 REM salida completa para diagnosticar problemas.
 REM ========================================================================
 
-set "MYSQL_BIN=D:\Program Files\MySQL\MySQL Server 8.4\bin"
 set "MYSQL_DATA=%LOCALAPPDATA%\MySQL\data"
-set "NODE_BIN=D:\Program Files\nodejs"
-set "JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.19.10-hotspot"
 set "PROJECT_DIR=%~dp0"
 set "BACKEND_DIR=%PROJECT_DIR%backend"
 set "CLI_DIR=%PROJECT_DIR%stockly-cli"
 set "LOG=%PROJECT_DIR%install.log"
+
+REM Detectar Node, MySQL y JDK desde PATH (con fallbacks a ubicaciones comunes).
+set "NODE_BIN="
+for /f "delims=" %%P in ('where node 2^>nul') do if not defined NODE_BIN for %%D in ("%%~dpP.") do set "NODE_BIN=%%~fD"
+if not defined NODE_BIN if exist "%ProgramFiles%\nodejs\node.exe" set "NODE_BIN=%ProgramFiles%\nodejs"
+
+set "MYSQL_BIN="
+for /f "delims=" %%P in ('where mysqld 2^>nul') do if not defined MYSQL_BIN for %%D in ("%%~dpP.") do set "MYSQL_BIN=%%~fD"
+if not defined MYSQL_BIN (
+    for /f "delims=" %%D in ('dir /b /ad "%ProgramFiles%\MySQL" 2^>nul') do (
+        if exist "%ProgramFiles%\MySQL\%%D\bin\mysqld.exe" set "MYSQL_BIN=%ProgramFiles%\MySQL\%%D\bin"
+    )
+)
+
+set "JAVA_HOME="
+for /f "delims=" %%P in ('where java 2^>nul') do if not defined JAVA_HOME for %%D in ("%%~dpP..") do set "JAVA_HOME=%%~fD"
+if not defined JAVA_HOME (
+    for /f "delims=" %%D in ('dir /b /ad "%ProgramFiles%\Microsoft" 2^>nul ^| findstr /I "jdk-17"') do (
+        if exist "%ProgramFiles%\Microsoft\%%D\bin\java.exe" set "JAVA_HOME=%ProgramFiles%\Microsoft\%%D"
+    )
+)
 
 title Stockly Installer
 color 0B
@@ -34,24 +52,29 @@ set "HAS_MVN=0"
 REM --- Prerrequisitos -----------------------------------------------------
 echo [1/6] Comprobando prerrequisitos...
 
-if exist "%NODE_BIN%\node.exe" (
+if defined NODE_BIN if exist "%NODE_BIN%\node.exe" (
     echo   [OK]   Node.js: %NODE_BIN%
-) else (
-    echo   [ERR]  Node.js NO encontrado en %NODE_BIN%
+    set "NODE_OK=1"
+)
+if not defined NODE_OK (
+    echo   [ERR]  Node.js NO encontrado en PATH ni en ubicaciones conocidas
     set /a ERRORS+=1
 )
 
-if exist "%MYSQL_BIN%\mysqld.exe" (
+if defined MYSQL_BIN if exist "%MYSQL_BIN%\mysqld.exe" (
     echo   [OK]   MySQL: %MYSQL_BIN%
-) else (
-    echo   [ERR]  MySQL NO encontrado en %MYSQL_BIN%
+    set "MYSQL_OK=1"
+)
+if not defined MYSQL_OK (
+    echo   [ERR]  MySQL NO encontrado en PATH ni en ubicaciones conocidas
     set /a ERRORS+=1
 )
 
-if exist "%JAVA_HOME%\bin\java.exe" (
+if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" (
     echo   [OK]   Java 17: %JAVA_HOME%
     set "HAS_JAVA=1"
-) else (
+)
+if not defined HAS_JAVA (
     echo   [warn] Java 17 NO encontrado (opcional, solo CLI)
 )
 
@@ -66,7 +89,7 @@ if !errorlevel! equ 0 (
 echo.
 if !ERRORS! gtr 0 (
     echo [ABORTAR] Faltan !ERRORS! dependencias obligatorias.
-    echo Instala Node y/o MySQL, o edita las rutas en la cabecera de este .bat
+    echo Instala Node LTS y/o MySQL, o ejecuta Stockly-Setup.exe para hacerlo via winget
     pause
     exit /b 1
 )

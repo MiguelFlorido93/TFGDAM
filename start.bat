@@ -9,8 +9,8 @@ REM MySQL queda corriendo minimizado (usa stop.bat para apagarlo).
 REM ========================================================================
 
 REM Rutas por defecto (fallback si no se encuentra en PATH).
-set "MYSQL_BIN_DEFAULT=C:\Program Files\MySQL\MySQL Server 8.4\bin"
-set "NODE_BIN_DEFAULT=C:\Program Files\nodejs"
+set "MYSQL_BIN_DEFAULT=%ProgramFiles%\MySQL\MySQL Server 8.4\bin"
+set "NODE_BIN_DEFAULT=%ProgramFiles%\nodejs"
 set "MYSQL_DATA=%LOCALAPPDATA%\MySQL\data"
 set "PROJECT_DIR=%~dp0"
 set "BACKEND_DIR=%PROJECT_DIR%backend"
@@ -59,8 +59,8 @@ if not defined MYSQL_BIN (
     if exist "%MYSQL_BIN_DEFAULT%\mysqld.exe" set "MYSQL_BIN=%MYSQL_BIN_DEFAULT%"
 )
 if not defined MYSQL_BIN (
-    for /f "delims=" %%D in ('dir /b /ad "C:\Program Files\MySQL" 2^>nul') do (
-        if exist "C:\Program Files\MySQL\%%D\bin\mysqld.exe" set "MYSQL_BIN=C:\Program Files\MySQL\%%D\bin"
+    for /f "delims=" %%D in ('dir /b /ad "%ProgramFiles%\MySQL" 2^>nul') do (
+        if exist "%ProgramFiles%\MySQL\%%D\bin\mysqld.exe" set "MYSQL_BIN=%ProgramFiles%\MySQL\%%D\bin"
     )
 )
 if not defined MYSQL_BIN (

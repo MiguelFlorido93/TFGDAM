@@ -84,6 +84,27 @@ Leyenda: ✅ hecho · 🟡 en curso · ⏳ pendiente
 | 6.9 | Multi-almacén (almacenes con sus propias ubicaciones)             | baja      |
 | 6.10| Recuperación de contraseña por email                              | media     |
 
+## Fase 8 — App móvil para empleado (companion Android) ⏳
+
+App nativa-ligera basada en **Capacitor** que envuelve la web existente y la presenta como aplicación instalable, con foco en el flujo del operario de almacén: ver reservas pendientes, confirmar entregas y reportar incidencias desde el propio puesto, sin abrir el navegador.
+
+| #   | Tarea                                                                                  | Prioridad |
+|-----|----------------------------------------------------------------------------------------|-----------|
+| 8.1 | Bootstrap del proyecto Capacitor (`mobile/`) apuntando al dominio HTTPS                | alta      |
+| 8.2 | Vista "Mis reservas asignadas" (filtrada por operario logueado, agrupada por ubicación) | alta      |
+| 8.3 | Pantalla detalle de reserva con **ubicación en almacén** (pasillo / estantería)        | alta      |
+| 8.4 | Acción "**Confirmar entrega**" con foto opcional + firma + cambio de estado            | alta      |
+| 8.5 | Acción "**Dar incidencia**" (rotura, faltante, mal estado) con descripción y fotos     | alta      |
+| 8.6 | Endpoints backend nuevos: `PATCH /reservas/:id/entregar`, `POST /reservas/:id/incidencias` | alta  |
+| 8.7 | Tabla `incidencias` (id, reserva_id, tipo, descripcion, fotos[], operario, fecha)      | alta      |
+| 8.8 | Login con biometría / sesión persistente (`@capacitor/biometric-auth`)                  | media     |
+| 8.9 | Push notifications al asignar reserva (OneSignal o FCM)                                | media     |
+| 8.10| Lector de QR/barras integrado para localizar producto al confirmar                     | media     |
+| 8.11| Generación de APK firmada + canal de distribución interna (TestFlight/PlayConsole)     | baja      |
+| 8.12| Modo offline: cola local de confirmaciones cuando no hay red, sync al recuperar        | baja      |
+
+> Justificación: el operario de almacén pasa el turno con el móvil en la mano. Una app específica (en lugar de la web genérica) reduce la fricción a "abrir → ver lista → tocar entregar". La parte de incidencias añade trazabilidad real: hoy las roturas se anotan en papel y se pierden.
+
 ## Fase 7 — Calidad de código y operaciones ⏳
 
 | # | Tarea                                                              | Prioridad |
@@ -110,3 +131,5 @@ Sem 6  ▶ 4.8 (diagramas) + 4.5 (CI/CD)
 Sem 7  ▶ 4.6 (memoria) + 4.7 (vídeo)
 Sem 8  ▶ Defensa: ensayo + slides
 ```
+
+> Post-defensa / continuación: Fase 8 (companion móvil del operario) como evolución natural — añade valor de negocio real y demuestra extensión de la arquitectura sin reescritura.

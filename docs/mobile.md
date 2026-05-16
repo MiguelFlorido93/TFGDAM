@@ -106,6 +106,87 @@ Cada item se puede convertir en una historia de usuario para Sprints 6-8.
 
 ---
 
+## 6. App móvil dedicada para el empleado (Fase 8 del roadmap)
+
+La PWA cubre al cliente final. Para el **operario de almacén** queremos una app instalable orientada a su flujo de trabajo: ver lo que tiene asignado, confirmar entregas y reportar incidencias sin pelearse con un navegador.
+
+### 6.1 Objetivo
+
+Un operario abre la app, hace login una vez (biometría después) y ve:
+
+1. **Reservas asignadas a él**, agrupadas por **ubicación en almacén** (pasillo / estantería) para hacer la ronda óptima.
+2. Al entrar en una reserva: detalle del producto, cantidad, cliente, y dos botones grandes:
+   - ✅ **Confirmar entrega** (opcional: foto del paquete, firma del cliente).
+   - ⚠️ **Dar incidencia** (rotura, faltante, mal estado, dirección incorrecta).
+
+### 6.2 Arquitectura propuesta
+
+```
+mobile/                      ← proyecto Capacitor independiente
+  capacitor.config.json      ← server.url = https://tfg.tudominio.com/empleado
+  android/                   ← proyecto Gradle generado
+  ios/                       ← opcional
+frontend/empleado/           ← nueva sub-SPA o vista filtrada de la PWA actual
+backend/src/routes/
+  reservas.js                ← + PATCH /:id/entregar, POST /:id/incidencias
+  incidencias.js (nuevo)     ← CRUD de incidencias
+db/schema.sql
+  + tabla incidencias        ← (id, reserva_id, operario_id, tipo, descripcion, fotos JSON, creada_en)
+```
+
+La sub-SPA `/empleado` es la misma base de código que el frontend actual pero con:
+- Bottom-nav reducida (Reservas / Incidencias / Perfil).
+- Sin catálogo de productos público.
+- Layout listas grandes táctiles (mínimo 56 px de alto por fila).
+
+Capacitor solo añade el shell nativo + permisos (cámara, push, biometría).
+
+### 6.3 Endpoints nuevos
+
+| Método | Ruta                                | Body                                                          | Resultado |
+|--------|-------------------------------------|---------------------------------------------------------------|-----------|
+| GET    | `/api/reservas/mias`                | —                                                             | Reservas con `operario_id = req.user.id` agrupadas por ubicación |
+| PATCH  | `/api/reservas/:id/entregar`        | `{ foto?: base64, firma?: base64 }`                           | Estado → `entregada`, registra movimiento + adjuntos |
+| POST   | `/api/reservas/:id/incidencias`     | `{ tipo, descripcion, fotos?: [base64] }`                     | Crea incidencia, marca reserva como `con_incidencia` |
+| GET    | `/api/incidencias?abiertas=true`    | —                                                             | Para el panel admin |
+| PATCH  | `/api/incidencias/:id/resolver`     | `{ resolucion }`                                              | Cierra incidencia |
+
+### 6.4 Esquema de la tabla `incidencias`
+
+```sql
+CREATE TABLE incidencias (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    reserva_id    INT NOT NULL,
+    operario_id   INT NOT NULL,
+    tipo          ENUM('rotura','faltante','mal_estado','direccion','otro') NOT NULL,
+    descripcion   TEXT,
+    fotos         JSON,
+    estado        ENUM('abierta','resuelta') NOT NULL DEFAULT 'abierta',
+    resolucion    TEXT,
+    creada_en     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    resuelta_en   DATETIME NULL,
+    FOREIGN KEY (reserva_id)  REFERENCES reservas(id),
+    FOREIGN KEY (operario_id) REFERENCES usuarios(id)
+);
+```
+
+### 6.5 Roadmap de implementación (4 semanas)
+
+| Semana | Trabajo                                                                 |
+|--------|-------------------------------------------------------------------------|
+| 1      | Migración SQL `incidencias`, endpoints REST, tests Jest                 |
+| 2      | Sub-SPA `/empleado` (lista, detalle, confirmación, formulario incidencia) |
+| 3      | Bootstrap Capacitor + permisos cámara + APK firmada                     |
+| 4      | Login biométrico, push (FCM), modo offline básico (cola local)          |
+
+### 6.6 Mejoras opcionales
+
+- Geolocalización para detectar que el operario está realmente en el almacén al confirmar.
+- Escáner QR para validar que el producto entregado coincide con el reservado.
+- Modo "ruta optimizada": ordena las reservas por proximidad de ubicaciones (algoritmo TSP simple sobre la lista).
+
+---
+
 ## 5. Mini checklist para la defensa con móvil
 
 - [ ] Móvil con la PWA instalada y datos demo cargados.

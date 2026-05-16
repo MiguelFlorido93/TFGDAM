@@ -13,11 +13,22 @@ set "PROJECT_DIR=%SCRIPT_DIR%.."
 set "LOG=%SCRIPT_DIR%reset_mysql.log"
 set "INIT_SQL=%SCRIPT_DIR%reset_mysql.sql"
 
-REM Si el instalador local ha desplegado MySQL portable en runtime\mysql\bin,
-REM lo usamos. Si no, caemos al MySQL Server 8.0 del sistema.
+REM 1) Runtime portable embebido (si lo hay).
+REM 2) mysqld desde PATH.
+REM 3) Cualquier "C:\Program Files\MySQL\MySQL Server X.X\bin" instalado.
 set "MYSQL_BIN=%PROJECT_DIR%\runtime\mysql\bin"
-if not exist "%MYSQL_BIN%\mysqld.exe" (
-    set "MYSQL_BIN=C:\Program Files\MySQL\MySQL Server 8.0\bin"
+if not exist "%MYSQL_BIN%\mysqld.exe" set "MYSQL_BIN="
+if not defined MYSQL_BIN (
+    for /f "delims=" %%P in ('where mysqld 2^>nul') do if not defined MYSQL_BIN for %%D in ("%%~dpP.") do set "MYSQL_BIN=%%~fD"
+)
+if not defined MYSQL_BIN (
+    for /f "delims=" %%D in ('dir /b /ad "%ProgramFiles%\MySQL" 2^>nul') do (
+        if exist "%ProgramFiles%\MySQL\%%D\bin\mysqld.exe" set "MYSQL_BIN=%ProgramFiles%\MySQL\%%D\bin"
+    )
+)
+if not defined MYSQL_BIN (
+    echo [ERROR] No se encontro mysqld en PATH ni en %ProgramFiles%\MySQL\
+    exit /b 1
 )
 
 echo === %DATE% %TIME% === > "%LOG%"

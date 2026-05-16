@@ -155,6 +155,12 @@
                 <button class="chip" data-estado="confirmada">Confirmadas</button>
             </div>
         </div>
+        <div class="reservas-toolbar" data-grupo="reservas">
+            <input type="search" class="r-buscar" placeholder="Buscar por código (#id) o SKU…" />
+            <label class="r-fecha"><span>Desde</span><input type="date" class="r-desde"></label>
+            <label class="r-fecha"><span>Hasta</span><input type="date" class="r-hasta"></label>
+            <button class="btn btn-ghost r-limpiar" type="button" title="Limpiar filtros">Limpiar</button>
+        </div>
         <div id="reservas-lista" class="reservas-lista"></div>
     </section>
 
@@ -167,6 +173,12 @@
                 <button class="chip" data-estado="entregada">Entregadas</button>
                 <button class="chip" data-estado="cancelada">Canceladas</button>
             </div>
+        </div>
+        <div class="reservas-toolbar" data-grupo="historial">
+            <input type="search" class="r-buscar" placeholder="Buscar por código (#id) o SKU…" />
+            <label class="r-fecha"><span>Desde</span><input type="date" class="r-desde"></label>
+            <label class="r-fecha"><span>Hasta</span><input type="date" class="r-hasta"></label>
+            <button class="btn btn-ghost r-limpiar" type="button" title="Limpiar filtros">Limpiar</button>
         </div>
         <div id="historial-lista" class="reservas-lista"></div>
     </section>

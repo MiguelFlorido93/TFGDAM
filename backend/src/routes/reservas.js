@@ -31,7 +31,58 @@ async function transitarReserva(conn, id, accion, user) {
         return;
     }
 
-    // confirmar / entregar requieren staff
+    // La reactivacion trabaja sobre reservas en estado final (entregada/cancelada).
+    // Por eso se procesa antes de los guards generales.
+    if (accion === 'reactivar_pendiente' || accion === 'reactivar_confirmada') {
+        if (!['admin', 'operario'].includes(user.rol)) throw new Error('No autorizado');
+        if (!['entregada', 'cancelada'].includes(r.estado))
+            throw new Error('Sólo se pueden reactivar reservas entregadas o canceladas');
+        const target = accion === 'reactivar_pendiente' ? 'pendiente' : 'confirmada';
+
+        const [[prod]] = await conn.query(
+            'SELECT stock, stock_reservado FROM productos WHERE id = ? FOR UPDATE',
+            [r.producto_id]
+        );
+
+        if (r.estado === 'entregada') {
+            // El stock fisico se entrego: lo recuperamos y volvemos a marcarlo como reservado
+            const nuevoStock = prod.stock + r.cantidad;
+            await conn.query(
+                'UPDATE productos SET stock = stock + ?, stock_reservado = stock_reservado + ? WHERE id = ?',
+                [r.cantidad, r.cantidad, r.producto_id]
+            );
+            await conn.query(
+                `INSERT INTO movimientos (producto_id, usuario_id, tipo, cantidad, stock_anterior, stock_posterior, motivo)
+                 VALUES (?, ?, 'entrada', ?, ?, ?, ?)`,
+                [r.producto_id, user.id, r.cantidad, prod.stock, nuevoStock, `Reversión entrega reserva #${id}`]
+            );
+            await conn.query(
+                `INSERT INTO movimientos (producto_id, usuario_id, tipo, cantidad, stock_anterior, stock_posterior, motivo)
+                 VALUES (?, ?, 'reserva', ?, ?, ?, ?)`,
+                [r.producto_id, user.id, r.cantidad, nuevoStock, nuevoStock, `Reactivación reserva #${id}`]
+            );
+        } else {
+            // cancelada -> stock fisico nunca se toco. Solo hay que volver a reservar.
+            const disponible = prod.stock - prod.stock_reservado;
+            if (r.cantidad > disponible)
+                throw new Error(`Stock insuficiente para reactivar (disponible: ${disponible}, necesarios: ${r.cantidad})`);
+            await conn.query('UPDATE productos SET stock_reservado = stock_reservado + ? WHERE id = ?', [
+                r.cantidad,
+                r.producto_id,
+            ]);
+            await conn.query(
+                `INSERT INTO movimientos (producto_id, usuario_id, tipo, cantidad, stock_anterior, stock_posterior, motivo)
+                 VALUES (?, ?, 'reserva', ?, ?, ?, ?)`,
+                [r.producto_id, user.id, r.cantidad, prod.stock, prod.stock, `Reactivación reserva #${id}`]
+            );
+        }
+
+        // Limpiamos fecha_entrega si la tenía
+        await conn.query('UPDATE reservas SET estado = ?, fecha_entrega = NULL WHERE id = ?', [target, id]);
+        return;
+    }
+
+    // confirmar / entregar requieren staff y reserva no cancelada
     if (!['admin', 'operario'].includes(user.rol)) throw new Error('No autorizado');
     if (r.estado === 'cancelada') throw new Error('Reserva cancelada');
 
@@ -83,6 +134,33 @@ router.get('/', authRequired, async (req, res) => {
         where.push(`r.estado IN (${estados.map(() => '?').join(',')})`);
         params.push(...estados);
     }
+
+    // Busqueda por "codigo": acepta id numerico de la reserva, SKU exacto o
+    // substring del SKU/nombre del producto. Si empieza por # se trata como id.
+    if (req.query.q) {
+        const raw = String(req.query.q).trim();
+        if (raw) {
+            const soloDigitos = raw.replace(/^#/, '');
+            if (/^\d+$/.test(soloDigitos)) {
+                where.push('(r.id = ? OR p.sku LIKE ?)');
+                params.push(Number(soloDigitos), `%${raw}%`);
+            } else {
+                where.push('(p.sku LIKE ? OR p.nombre LIKE ?)');
+                params.push(`%${raw}%`, `%${raw}%`);
+            }
+        }
+    }
+
+    // Rango de fechas sobre fecha_reserva. Formato esperado: YYYY-MM-DD.
+    if (req.query.desde) {
+        where.push('r.fecha_reserva >= ?');
+        params.push(req.query.desde + ' 00:00:00');
+    }
+    if (req.query.hasta) {
+        where.push('r.fecha_reserva <= ?');
+        params.push(req.query.hasta + ' 23:59:59');
+    }
+
     const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
 
     const [rows] = await pool.query(
@@ -180,13 +258,34 @@ router.post('/bulk', authRequired, async (req, res) => {
 });
 
 // PATCH /api/reservas/:id/estado  (operario/admin) — adaptador al helper
+// Body { estado: 'confirmada'|'entregada'|'pendiente'|'cancelada' }.
+// pendiente/confirmada sobre una reserva entregada o cancelada -> reactivación.
 router.patch('/:id/estado', authRequired, requireRole('admin', 'operario'), async (req, res) => {
-    const map = { confirmada: 'confirmar', entregada: 'entregar' };
-    const accion = map[req.body?.estado];
-    if (!accion) return res.status(400).json({ error: 'Estado inválido' });
+    const estado = req.body?.estado;
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
+
+        let accion;
+        if (estado === 'confirmada' || estado === 'pendiente') {
+            // Decidir entre 'confirmar' (pendiente->confirmada) y 'reactivar_*' (final->activa)
+            const [[cur]] = await conn.query('SELECT estado FROM reservas WHERE id = ?', [req.params.id]);
+            if (!cur) throw new Error('Reserva no encontrada');
+            if (cur.estado === 'entregada' || cur.estado === 'cancelada') {
+                accion = estado === 'pendiente' ? 'reactivar_pendiente' : 'reactivar_confirmada';
+            } else if (estado === 'confirmada') {
+                accion = 'confirmar';
+            } else {
+                throw new Error('Sólo se puede volver a pendiente desde entregada/cancelada');
+            }
+        } else if (estado === 'entregada') {
+            accion = 'entregar';
+        } else if (estado === 'cancelada') {
+            accion = 'cancelar';
+        } else {
+            throw new Error('Estado inválido');
+        }
+
         await transitarReserva(conn, req.params.id, accion, req.user);
         await conn.commit();
         res.json({ ok: true });

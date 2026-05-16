@@ -22,6 +22,8 @@ const state = {
     productoSel: null,
     reservaFiltro: '',
     historialFiltro: '',
+    reservasQuery: { q: '', desde: '', hasta: '' },
+    historialQuery: { q: '', desde: '', hasta: '' },
     invFiltro: { search: '', categoria: '', stockBajo: false },
 };
 
@@ -431,6 +433,12 @@ async function confirmarReserva() {
 // =============================================================
 // Reservas
 // =============================================================
+function _addFiltrosComunes(params, query) {
+    if (query.q) params.set('q', query.q);
+    if (query.desde) params.set('desde', query.desde);
+    if (query.hasta) params.set('hasta', query.hasta);
+}
+
 async function cargarReservas() {
     skeletonReservas('#reservas-lista');
     const params = new URLSearchParams();
@@ -438,6 +446,7 @@ async function cargarReservas() {
     // concreta, mandamos solo ese estado; si no, atajo ?activas=1.
     if (state.reservaFiltro) params.set('estado', state.reservaFiltro);
     else params.set('activas', '1');
+    _addFiltrosComunes(params, state.reservasQuery);
     try {
         const data = await api('/reservas?' + params);
         renderReservas(data, '#reservas-lista');
@@ -451,6 +460,7 @@ async function cargarHistorial() {
     const params = new URLSearchParams();
     if (state.historialFiltro) params.set('estado', state.historialFiltro);
     else params.set('historico', '1');
+    _addFiltrosComunes(params, state.historialQuery);
     try {
         const data = await api('/reservas?' + params);
         renderReservas(data, '#historial-lista');
@@ -557,6 +567,31 @@ function renderReservas(data, selector = '#reservas-lista') {
             acciones.append(
                 el('button', { class: 'btn btn-danger btn-mini', onclick: () => cancelarReserva(r.id) }, 'Cancelar')
             );
+        // Reactivar (solo staff, solo desde estados finales)
+        if (staff && (r.estado === 'entregada' || r.estado === 'cancelada')) {
+            acciones.append(
+                el(
+                    'button',
+                    {
+                        class: 'btn btn-ghost btn-mini',
+                        title: 'Volver a pendiente (deshacer)',
+                        onclick: () => reactivarReserva(r, 'pendiente'),
+                    },
+                    '↶ Pendiente'
+                )
+            );
+            acciones.append(
+                el(
+                    'button',
+                    {
+                        class: 'btn btn-ghost btn-mini',
+                        title: 'Volver a confirmada (deshacer)',
+                        onclick: () => reactivarReserva(r, 'confirmada'),
+                    },
+                    '↶ Confirmada'
+                )
+            );
+        }
 
         const fila = el(
             'div',
@@ -669,6 +704,36 @@ async function cambiarEstadoReserva(id, estado) {
     try {
         await api(`/reservas/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) });
         toast(`Reserva ${estado}`, 'ok');
+        refrescarVistaReservas();
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+/**
+ * Reactiva una reserva entregada/cancelada devolviéndola a un estado activo.
+ * destino ∈ {'pendiente','confirmada'}. Pide confirmación al usuario y advierte
+ * de los cambios de stock que conlleva.
+ */
+async function reactivarReserva(r, destino) {
+    const origen = r.estado;
+    const mensaje =
+        origen === 'entregada'
+            ? `La reserva #${r.id} (${r.cantidad}× ${r.producto}) está marcada como ENTREGADA. ` +
+              `Al revertirla a "${destino}" se devolverá el stock al almacén y se volverá a reservar la misma cantidad. ¿Continuar?`
+            : `La reserva #${r.id} (${r.cantidad}× ${r.producto}) está CANCELADA. ` +
+              `Al revertirla a "${destino}" se reservará de nuevo el stock necesario. ` +
+              `Si no hay stock suficiente disponible, la operación fallará. ¿Continuar?`;
+    const ok = await confirmar({
+        titulo: 'Revertir reserva',
+        mensaje,
+        textoOk: `Sí, pasar a ${destino}`,
+        icono: '↶',
+    });
+    if (!ok) return;
+    try {
+        await api(`/reservas/${r.id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado: destino }) });
+        toast(`Reserva #${r.id} reactivada como ${destino}`, 'ok');
         refrescarVistaReservas();
     } catch (e) {
         toast(e.message, 'error');
@@ -2166,6 +2231,39 @@ function bindEventos() {
                     }
                 })
         );
+    });
+
+    // Toolbars de busqueda + rango de fechas (Reservas y Historial)
+    $$('.reservas-toolbar').forEach(tb => {
+        const tipo = tb.dataset.grupo; // 'reservas' | 'historial'
+        const slot = tipo === 'historial' ? state.historialQuery : state.reservasQuery;
+        const recarga = tipo === 'historial' ? cargarHistorial : cargarReservas;
+        const buscar = tb.querySelector('.r-buscar');
+        const desde = tb.querySelector('.r-desde');
+        const hasta = tb.querySelector('.r-hasta');
+        const limpiar = tb.querySelector('.r-limpiar');
+        buscar?.addEventListener(
+            'input',
+            debounce(e => {
+                slot.q = e.target.value.trim();
+                recarga();
+            })
+        );
+        desde?.addEventListener('change', e => {
+            slot.desde = e.target.value;
+            recarga();
+        });
+        hasta?.addEventListener('change', e => {
+            slot.hasta = e.target.value;
+            recarga();
+        });
+        limpiar?.addEventListener('click', () => {
+            slot.q = slot.desde = slot.hasta = '';
+            if (buscar) buscar.value = '';
+            if (desde) desde.value = '';
+            if (hasta) hasta.value = '';
+            recarga();
+        });
     });
 
     // Inventario

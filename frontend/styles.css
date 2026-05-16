@@ -848,6 +848,50 @@ a:focus-visible, .tab:focus-visible, .chip:focus-visible, .bn:focus-visible, .au
     box-shadow: 0 8px 16px -8px rgba(139,92,246,.65);
 }
 
+.reservas-toolbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem;
+    margin: 0 0 1rem;
+    padding: .65rem .85rem;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+}
+.reservas-toolbar .r-buscar {
+    flex: 1 1 220px; min-width: 180px;
+    padding: .45rem .7rem;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    color: var(--c-text);
+    font-size: .85rem;
+}
+.reservas-toolbar .r-buscar:focus {
+    outline: none;
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px rgba(139,92,246,.18);
+}
+.reservas-toolbar .r-fecha {
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-size: .8rem; color: var(--c-text-2);
+}
+.reservas-toolbar .r-fecha input[type=date] {
+    padding: .35rem .5rem;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    color: var(--c-text);
+    font-size: .8rem;
+    color-scheme: light dark;
+}
+.reservas-toolbar .r-limpiar {
+    padding: .35rem .8rem;
+    font-size: .8rem;
+}
+@media (max-width: 600px) {
+    .reservas-toolbar { padding: .55rem .65rem; }
+    .reservas-toolbar .r-fecha { font-size: .75rem; }
+}
+
 .reservas-lista { display: flex; flex-direction: column; gap: .75rem; }
 .reserva {
     background: var(--c-surface);

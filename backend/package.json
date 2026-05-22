@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Stockly · API REST del sistema de gestión de almacén y reservas (TFG DAM - Adrián Bravo Santos y Miguel Ángel Florido)",
   "main": "server.js",
+  "engines": {
+    "node": ">=20.0.0 <25.0.0"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",

@@ -1,236 +1,105 @@
-# 🌐 Guía: hostear el proyecto en internet con un dominio
+# Despliegue en Railway — Stockly
 
-Esta guía cubre **tres caminos** ordenados de menor a mayor dificultad y precio:
+Guía paso a paso para desplegar **Stockly** en [Railway](https://railway.com) usando el subdominio gratuito `*.up.railway.app`. El plan gratuito de Railway viene con $5 de crédito/mes (suficiente para un proyecto TFG de uso esporádico) y MySQL gestionado incluido como plugin.
 
-1. **Render.com (PaaS, gratis para empezar)** — recomendado si nunca has desplegado antes.
-2. **VPS Linux + Nginx + PM2 (DigitalOcean / Hetzner / Contabo)** — el más realista para un TFG, ~5 €/mes.
-3. **Docker Compose en VPS** — el más reproducible y "production-ready".
-
-Y en todos los casos: **dominio propio + HTTPS gratis con Let's Encrypt**.
-
----
-
-## 0. Antes de desplegar
-
-- Sube el repo a GitHub: `git remote add origin <url> && git push -u origin main`.
-- Genera un `JWT_SECRET` largo:
-  ```bash
-  node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-  ```
-- Copia `backend/.env.example` a `.env` real (no se sube al repo).
-- Asegúrate de que `frontend/app.js` usa rutas relativas a `/api`. ✔ Ya lo hace.
+> **Lo que ya está preparado en el repo** (no tienes que tocar nada):
+> - `nixpacks.toml` + `railway.json` con el comando de build (`cd backend && npm ci`) y de arranque (`node server.js`).
+> - `backend/src/db.js` lee `MYSQL_URL` si está presente (lo provee el plugin MySQL de Railway).
+> - `backend/src/ensure-schema.js` aplica `db/schema.sql` automáticamente la primera vez si la tabla `usuarios` no existe.
+> - `backend/server.js` tiene `trust proxy`, escucha en `0.0.0.0:${PORT}` y `helmet` ya configurado.
+> - `ensure-jwt-secret.js` falla con mensaje claro si `JWT_SECRET` no está definido en producción (mejor que generar uno que se invalida en cada deploy).
+> - El frontend habla con `/api` (mismo origen), así que **no hay que cambiar URLs**.
 
 ---
 
-## 1. Camino A — Render.com (gratis, ~15 min)
+## 1. Crear cuenta y proyecto
 
-### 1.1 Base de datos
-Render no incluye MySQL gratis, así que usa una BD externa gratuita:
-- **PlanetScale** (MySQL serverless) — https://planetscale.com
-- O **Aiven** / **Railway MySQL** / **Neon Postgres** (requiere migrar a Postgres).
+1. Entra en <https://railway.com> y crea cuenta con GitHub.
+2. Pulsa **New Project → Deploy from GitHub repo**.
+3. Autoriza Railway a leer tu repositorio `TFGDAM` y selecciónalo.
+4. Railway detecta `nixpacks.toml` y empieza el primer build (fallará porque aún falta MySQL — normal).
 
-Crea la BD, importa `db/schema.sql` desde su web o con `mysql -h … < db/schema.sql`. Apunta:
-- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`.
+## 2. Añadir MySQL gestionado
 
-### 1.2 Web Service para el backend
-1. https://render.com → **New → Web Service** → conecta tu repo.
-2. Configuración:
-   - Root directory: `backend`
-   - Build command: `npm install`
-   - Start command: `npm start`
-   - Plan: `Free`
-3. Variables de entorno (pestaña **Environment**): pega todas las del `.env`.
-4. Deploy → al cabo de unos minutos te da una URL `https://stockly.onrender.com`.
+1. Dentro del proyecto, **+ New → Database → Add MySQL**.
+2. Railway lanza una instancia. Te aparece como un servicio adicional en el mismo proyecto.
 
-### 1.3 Servir el frontend
-El backend ya sirve `frontend/` con `express.static`, así que la misma URL muestra el login. ✔
+## 3. Conectar backend ↔ MySQL
 
-### 1.4 Dominio propio
-1. Compra el dominio (recomendado: **Namecheap**, **Porkbun** o **IONOS**, ~10 €/año).
-2. En Render → **Settings → Custom domain** → añade `tfg.tudominio.com`.
-3. Render te indica un registro CNAME → cópialo en el panel DNS de tu registrador.
-4. HTTPS se emite automáticamente (Let's Encrypt) en cuanto el DNS propaga.
+1. Abre el servicio del backend (el que viene del repo).
+2. Pestaña **Variables → New Variable Reference → MySQL → MYSQL_URL**.
+   - Esto crea una variable `MYSQL_URL` que apunta dinámicamente al MySQL del paso 2 (formato `mysql://user:pass@host:port/db`).
+3. Añade el resto de variables:
 
----
+| Variable          | Valor                                                                 |
+|-------------------|-----------------------------------------------------------------------|
+| `NODE_ENV`        | `production`                                                          |
+| `JWT_SECRET`      | Genera uno: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+| `JWT_EXPIRES_IN`  | `8h` (o lo que prefieras)                                              |
+| `CORS_ORIGIN`     | Déjalo vacío de momento (lo rellenas tras saber tu dominio en el paso 4) |
 
-## 2. Camino B — VPS Linux con Nginx + PM2
+> **Importante:** no compartas el `JWT_SECRET` ni lo subas al repo. Si lo cambias, todas las sesiones activas se invalidan.
 
-> Recomendado para el TFG: te enseña administración real de servidor.
+## 4. Generar el dominio público
 
-Proveedores baratos:
-- **Hetzner Cloud CX22**: ~4 €/mes (Helsinki / Núremberg).
-- **DigitalOcean Droplet**: 5 $/mes.
-- **Contabo VPS S**: 5 €/mes (más recursos).
+1. En el backend, pestaña **Settings → Networking → Generate Domain**.
+2. Railway crea algo como `stockly-production-abc123.up.railway.app`.
+3. Copia esa URL.
+4. Vuelve a **Variables** y rellena `CORS_ORIGIN` con esa URL (con `https://` por delante). Esto restringe quién puede llamar a la API desde otro origen.
 
-### 2.1 Crear servidor y conectarse
-```bash
-ssh root@TU.IP.DEL.VPS
-```
-Sistema recomendado: **Ubuntu 22.04 LTS**.
+## 5. Primer arranque
 
-### 2.2 Setup base
-```bash
-apt update && apt -y upgrade
-apt -y install nginx git curl ufw mariadb-server certbot python3-certbot-nginx
-ufw allow OpenSSH && ufw allow 'Nginx Full' && ufw enable
-
-# Node 20 LTS
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt -y install nodejs
-npm i -g pm2
-```
-
-### 2.3 Base de datos
-```bash
-mysql_secure_installation        # define password de root, etc.
-mysql -u root -p < /tmp/schema.sql   # subido por scp / git clone
-```
-
-### 2.4 Clonar y arrancar el backend
-```bash
-adduser tfg
-su - tfg
-git clone https://github.com/<tu-usuario>/TFGDAM.git
-cd TFGDAM/backend
-cp .env.example .env
-nano .env                         # rellena credenciales reales + JWT_SECRET
-npm ci
-pm2 start server.js --name tfg-api
-pm2 save
-sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u tfg --hp /home/tfg
-```
-
-### 2.5 Nginx como reverse proxy
-Crea `/etc/nginx/sites-available/tfg`:
-```nginx
-server {
-    listen 80;
-    server_name tfg.tudominio.com;
-
-    client_max_body_size 5m;
-    gzip on;
-    gzip_types text/css application/javascript image/svg+xml application/json;
-
-    location / {
-        proxy_pass http://127.0.0.1:3001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-```bash
-ln -s /etc/nginx/sites-available/tfg /etc/nginx/sites-enabled/
-nginx -t && systemctl reload nginx
-```
-
-### 2.6 Dominio + HTTPS
-1. En el panel DNS del registrador, crea un registro **A**:
-   - `Tipo: A` · `Host: tfg` · `Valor: TU.IP.DEL.VPS` · TTL 3600.
-2. Espera que `dig tfg.tudominio.com` apunte a tu IP (1-30 min).
-3. Emite certificado:
-   ```bash
-   certbot --nginx -d tfg.tudominio.com
+1. Railway re-despliega automáticamente al cambiar variables.
+2. Mira los **Logs**. Deberías ver:
    ```
-   Certbot añade el bloque `listen 443 ssl` y configura redirección 80→443. Renovación automática vía cron.
+   🚀 Stockly API escuchando en :PORT
+   🔧 Schema vacío detectado; aplicando db/schema.sql…
+   ✅ Schema aplicado (N statements).
+   🔐 N usuarios semilla con password "password123"
+   ```
+3. Abre `https://<tu-dominio>.up.railway.app/api/health` → debe responder `{"ok":true,"db":true,"ts":"…"}`.
+4. Abre `https://<tu-dominio>.up.railway.app/` → carga el frontend.
+5. Login con `adrian@tfg.local` / `password123` (admin).
 
-### 2.7 Backups básicos
-Crea `/etc/cron.daily/backup-tfg`:
-```bash
-#!/bin/bash
-DATE=$(date +%F)
-mysqldump --single-transaction stockly | gzip > /var/backups/tfg-$DATE.sql.gz
-find /var/backups -name 'tfg-*.sql.gz' -mtime +14 -delete
-```
-```bash
-chmod +x /etc/cron.daily/backup-tfg
-```
+## 6. Cambiar las contraseñas demo (importante)
 
----
+Los usuarios semilla tienen `password123`. **Cambia las contraseñas en producción** desde la UI (perfil → cambiar contraseña) en cuanto puedas, o borra los usuarios demo y crea los reales.
 
-## 3. Camino C — Docker Compose en VPS
+## 7. Despliegues posteriores
 
-Crea en la raíz del repo `docker-compose.yml`:
-```yaml
-services:
-  db:
-    image: mariadb:10.11
-    restart: always
-    environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MARIADB_DATABASE: stockly
-    volumes:
-      - dbdata:/var/lib/mysql
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-  api:
-    build: ./backend
-    restart: always
-    environment:
-      DB_HOST: db
-      DB_USER: root
-      DB_PASSWORD: ${DB_ROOT_PASSWORD}
-      DB_NAME: stockly
-      JWT_SECRET: ${JWT_SECRET}
-      NODE_ENV: production
-    depends_on: [db]
-    ports: ["3001:3001"]
-volumes:
-  dbdata:
-```
-Y `backend/Dockerfile`:
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY . .
-COPY ../frontend ../frontend
-EXPOSE 3001
-CMD ["node", "server.js"]
-```
-> Nota: con Docker es más limpio mover `frontend/` dentro de `backend/public` durante el build.
-
-Comandos:
-```bash
-docker compose up -d --build
-docker compose logs -f api
-```
-
-Combina con Nginx + Certbot del paso 2.5/2.6 para HTTPS.
+Cada `git push` a `main` dispara un nuevo deploy en Railway. La BD persiste entre deploys (es el servicio MySQL aparte). El schema solo se aplica si las tablas no existen, así que **redeploys no pierden datos**.
 
 ---
 
-## 4. Comprobaciones tras desplegar
+## Coste estimado
 
-```bash
-curl https://tfg.tudominio.com/api/health
-# { "ok": true, "db": true, "ts": "..." }
-```
-- ¿Login funciona? Abre el dominio en el navegador.
-- ¿HTTPS válido? Candado en la barra de direcciones.
-- ¿PWA instalable? Chrome → menú → "Instalar Stockly".
-- ¿Logs limpios? `pm2 logs tfg-api --lines 50` o `docker compose logs --tail=50 api`.
+- Plan gratuito de Railway: **$5 de crédito/mes** (no caduca durante el primer mes).
+- Backend mínimo (~256 MB RAM, sleep cuando no hay tráfico) + MySQL pequeño ≈ **$3-4/mes** de consumo real para un TFG con uso esporádico.
+- Conclusión: gratis durante la defensa, ~$5/mes si lo mantienes activo después.
 
----
+## Si quieres dominio propio (opcional)
 
-## 5. Buenas prácticas de seguridad mínimas
-
-- Cambia `JWT_SECRET` y las contraseñas semilla antes de exponer la app.
-- Crea un usuario MySQL específico (no root) y dale permisos sólo sobre `stockly`.
-- Configura **fail2ban** en el VPS (`apt install fail2ban`) para bloquear intentos SSH.
-- Mantén `apt -y upgrade` semanal y `npm audit fix` periódico.
-- Habilita **HSTS** en Nginx tras verificar que el HTTPS funciona estable.
+1. Compra dominio (ej. Namecheap, Cloudflare Registrar — ~7-12 €/año).
+2. En Railway → **Settings → Networking → Custom Domain → Add Domain**.
+3. Railway te da un `CNAME` que añades en el panel DNS de tu registrador.
+4. Espera 5-30 min a que propague. Railway genera el TLS automáticamente.
+5. Actualiza `CORS_ORIGIN` con el nuevo dominio.
 
 ---
 
-## 6. Coste real estimado para 1 año
+## Resolución de problemas
 
-| Concepto                              | Coste anual aprox. |
-|---------------------------------------|--------------------|
-| Dominio `.com` / `.es`                | 10-12 €            |
-| VPS Hetzner CX22                      | ~50 €              |
-| Backups objeto (Hetzner / Backblaze)  | 5-10 €             |
-| **Total**                             | **~65-75 €**       |
+| Síntoma                                            | Causa probable                                            | Solución                                              |
+|----------------------------------------------------|------------------------------------------------------------|--------------------------------------------------------|
+| Log `❌ JWT_SECRET ausente o débil en producción.`  | Falta la variable `JWT_SECRET` o tiene < 32 caracteres.   | Define una con `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`. |
+| Health endpoint devuelve `db: false`                | `MYSQL_URL` mal referenciada                              | En Variables, asegúrate de que `MYSQL_URL` es una **referencia** al servicio MySQL, no texto literal. |
+| Frontend carga pero el login falla con CORS error  | `CORS_ORIGIN` no incluye tu dominio                       | Ajusta `CORS_ORIGIN` y redeploy.                       |
+| Tras un push se pierden los datos                   | Borraste el servicio MySQL                                | Restaura desde backup (Railway hace snapshots diarios en el plan Pro). |
+| `Cannot find module` en deploy                       | Falta una dependencia en `backend/package.json`           | Añádela y push.                                        |
+| Crash con `EACCES: write .env`                       | El código intentó escribir `.env` en runtime (no debería ocurrir tras el cambio) | Verifica que tienes la última versión del repo.        |
 
-Render.com gratis es 0 € pero el servicio se "duerme" tras 15 min de inactividad; sirve para defensa pero no para uso real continuo.
+---
+
+## Limpieza local opcional
+
+Si ya no necesitas ejecutar el backend en local porque siempre usas el de Railway, puedes parar MySQL local con `stop.bat`. El frontend desplegado seguirá funcionando solo.

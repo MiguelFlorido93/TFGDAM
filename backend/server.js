@@ -23,10 +23,19 @@ const pool = require('./src/db');
 
 const app = express();
 
+// Detrás del proxy de Railway/Render/Fly. Necesario para que express-rate-limit
+// y la detección de IP real funcionen, y para que `req.ip` no sea siempre la del proxy.
+app.set('trust proxy', 1);
+
 // ---------- Middlewares globales ----------
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
-app.use(cors());
+// CORS: en producción aceptamos un origen explícito vía CORS_ORIGIN
+// (o lista separada por comas). En dev abierto a todo.
+const corsOrigin = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean)
+    : '*';
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '4mb' })); // 4mb cubre imports CSV de hasta ~2000 productos
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
@@ -88,10 +97,17 @@ async function ensureSeedHashes() {
 // Cuando los tests importan el módulo, el `app` se exporta sin escuchar.
 if (require.main === module) {
     const PORT = process.env.PORT || 3001;
-    app.listen(PORT, async () => {
-        console.log(`🚀 Stockly API → http://localhost:${PORT}`);
-        console.log(`🌐 Frontend       → http://localhost:${PORT}/`);
-        await ensureSeedHashes();
+    const ensureSchema = require('./src/ensure-schema');
+    // En 0.0.0.0 para que Railway/contenedores puedan exponerlo (en local sigue
+    // siendo accesible por 127.0.0.1 igual).
+    app.listen(PORT, '0.0.0.0', async () => {
+        console.log(`🚀 Stockly API escuchando en :${PORT}`);
+        try {
+            await ensureSchema();
+            await ensureSeedHashes();
+        } catch (e) {
+            console.error('Fallo en bootstrap:', e.message);
+        }
     });
 }
 

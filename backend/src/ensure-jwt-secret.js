@@ -50,10 +50,23 @@ function actualizarEnv(envPath, key, value) {
 module.exports = function ensureJwtSecret() {
     if (!looksWeak(process.env.JWT_SECRET)) return; // ya hay uno bueno
 
+    // En producción (Railway, Render, VPS, etc.) el filesystem suele ser efímero,
+    // así que escribir a .env no sirve: tras el siguiente deploy el secreto cambia
+    // y todos los tokens emitidos quedan invalidados. Mejor fallar rápido con un
+    // mensaje claro para que el operador configure JWT_SECRET como variable de
+    // entorno del proveedor.
+    if (process.env.NODE_ENV === 'production') {
+        console.error('❌ JWT_SECRET ausente o débil en producción.');
+        console.error('   Define la variable JWT_SECRET en el panel del proveedor cloud');
+        console.error('   con al menos 32 caracteres (64+ recomendado). Ejemplo Node:');
+        console.error('     node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+        process.exit(1);
+    }
+
     const secreto = generarSecreto();
     process.env.JWT_SECRET = secreto;
 
-    // Persistir a .env (en la raíz del backend) para que sobreviva al reinicio
+    // En desarrollo persistimos a .env (raíz del backend) para que sobreviva al reinicio.
     const envPath = path.join(__dirname, '..', '.env');
     try {
         actualizarEnv(envPath, 'JWT_SECRET', secreto);

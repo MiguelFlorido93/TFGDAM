@@ -45,9 +45,10 @@ Leyenda: ✅ hecho · 🟡 en curso · ⏳ pendiente
 
 | # | Tarea                                                              | Responsable | Estado |
 |---|--------------------------------------------------------------------|-------------|--------|
-| 4.1 | Despliegue del backend en VPS/Render (ver `hosting.md`)           | A           | 🟡     |
-| 4.2 | Compra y configuración de dominio                                 | A           | ⏳     |
-| 4.3 | HTTPS con Let's Encrypt                                           | A           | ⏳     |
+| 4.0 | **Desplegar la app a Railway (sustituir localhost)** — backend Node + MySQL gestionado, URL pública `*.up.railway.app`. Código ya cloud-ready (`MYSQL_URL`, `trust proxy`, `CORS_ORIGIN`, bootstrap automático de schema, fail-fast si falta `JWT_SECRET`). Falta la acción en el panel de Railway. Ver `docs/hosting.md`. | A | 🟡 |
+| 4.1 | Provisionar Railway (proyecto + plugin MySQL + variables)         | A           | 🟡     |
+| 4.2 | Dominio propio (opcional; el subdominio gratuito es suficiente)   | A           | ⏳     |
+| 4.3 | HTTPS (gestionado automáticamente por Railway)                    | A           | ✅     |
 | 4.4 | Backup automatizado de la BD                                      | M           | ⏳     |
 | 4.5 | Workflow GitHub Actions: build + deploy automático                | A           | ⏳     |
 | 4.6 | Memoria PDF                                                       | AM          | 🟡     |
@@ -84,26 +85,50 @@ Leyenda: ✅ hecho · 🟡 en curso · ⏳ pendiente
 | 6.9 | Multi-almacén (almacenes con sus propias ubicaciones)             | baja      |
 | 6.10| Recuperación de contraseña por email                              | media     |
 
-## Fase 8 — App móvil para empleado (companion Android) ⏳
+## Fase 8 — App móvil Android nativa para el operario (Kotlin) ⏳
 
-App nativa-ligera basada en **Capacitor** que envuelve la web existente y la presenta como aplicación instalable, con foco en el flujo del operario de almacén: ver reservas pendientes, confirmar entregas y reportar incidencias desde el propio puesto, sin abrir el navegador.
+Aplicación **Android nativa en Kotlin** que consume la misma API REST. El empleado consulta reservas pendientes y confirmadas, ve el detalle (cliente, productos, cantidades), confirma el pedido y la entrega, y si hay un problema rellena un formulario de incidencia que queda adjunto a la reserva. El sistema registra **quién confirmó**, **quién entregó** y **quién reportó** cada incidencia para tener trazabilidad completa por empleado.
 
-| #   | Tarea                                                                                  | Prioridad |
-|-----|----------------------------------------------------------------------------------------|-----------|
-| 8.1 | Bootstrap del proyecto Capacitor (`mobile/`) apuntando al dominio HTTPS                | alta      |
-| 8.2 | Vista "Mis reservas asignadas" (filtrada por operario logueado, agrupada por ubicación) | alta      |
-| 8.3 | Pantalla detalle de reserva con **ubicación en almacén** (pasillo / estantería)        | alta      |
-| 8.4 | Acción "**Confirmar entrega**" con foto opcional + firma + cambio de estado            | alta      |
-| 8.5 | Acción "**Dar incidencia**" (rotura, faltante, mal estado) con descripción y fotos     | alta      |
-| 8.6 | Endpoints backend nuevos: `PATCH /reservas/:id/entregar`, `POST /reservas/:id/incidencias` | alta  |
-| 8.7 | Tabla `incidencias` (id, reserva_id, tipo, descripcion, fotos[], operario, fecha)      | alta      |
-| 8.8 | Login con biometría / sesión persistente (`@capacitor/biometric-auth`)                  | media     |
-| 8.9 | Push notifications al asignar reserva (OneSignal o FCM)                                | media     |
-| 8.10| Lector de QR/barras integrado para localizar producto al confirmar                     | media     |
-| 8.11| Generación de APK firmada + canal de distribución interna (TestFlight/PlayConsole)     | baja      |
-| 8.12| Modo offline: cola local de confirmaciones cuando no hay red, sync al recuperar        | baja      |
+### 8.A Flujo funcional
 
-> Justificación: el operario de almacén pasa el turno con el móvil en la mano. Una app específica (en lugar de la web genérica) reduce la fricción a "abrir → ver lista → tocar entregar". La parte de incidencias añade trazabilidad real: hoy las roturas se anotan en papel y se pierden.
+| Estado de reserva | Acción del empleado | Transición                  | Quién queda registrado          |
+|-------------------|---------------------|------------------------------|----------------------------------|
+| `pendiente`       | Confirmar pedido    | `pendiente → confirmada`     | `confirmada_por_id`              |
+| `confirmada`      | Confirmar entrega   | `confirmada → entregada`     | `entregada_por_id`               |
+| Cualquier estado activo | Reportar incidencia | (no cambia estado, opcionalmente `incidencia`) | `incidencias.operario_id` |
+
+### 8.B Pantallas
+
+1. **Login** (email/password) → JWT guardado cifrado.
+2. **Lista de reservas** filtrable por estado: `pendientes`, `confirmadas` (por defecto las dos). Muestra cliente, productos resumidos, fecha, estado.
+3. **Detalle de reserva**: datos del cliente, lista de productos con cantidades y ubicación, historial de quién confirmó/entregó, incidencias previas si las hay. Tres botones contextuales:
+   - "Confirmar pedido" (solo si estado = `pendiente`).
+   - "Confirmar entrega" (solo si estado = `confirmada`).
+   - "Reportar incidencia" (siempre disponible).
+4. **Formulario de incidencia**: tipo (rotura / faltante / mal estado / otro), descripción libre, foto opcional. Al guardar, la incidencia se adjunta a la reserva.
+
+### 8.C Tareas
+
+| #    | Tarea                                                                                       | Prioridad |
+|------|---------------------------------------------------------------------------------------------|-----------|
+| 8.1  | Bootstrap del proyecto Android Studio (`mobile-android/`) — Kotlin + Jetpack Compose         | alta      |
+| 8.2  | Capa de red: Retrofit + OkHttp + interceptor JWT contra la API pública                       | alta      |
+| 8.3  | Login → guardar token con EncryptedSharedPreferences                                          | alta      |
+| 8.4  | Lista de reservas filtrable por estado (`pendientes` / `confirmadas`)                         | alta      |
+| 8.5  | Detalle de reserva con productos, cantidades, historial y botones contextuales                | alta      |
+| 8.6  | Acción **Confirmar pedido** (`PATCH /api/reservas/:id/estado` con `accion=confirmar`)         | alta      |
+| 8.7  | Acción **Confirmar entrega** (`PATCH /api/reservas/:id/estado` con `accion=entregar`)         | alta      |
+| 8.8  | Formulario **Reportar incidencia** con tipo + descripción + foto, `POST /api/reservas/:id/incidencias` | alta |
+| 8.9  | **Backend:** añadir columnas `reservas.confirmada_por_id`, `reservas.entregada_por_id` (FK a usuarios) y rellenarlas en los `PATCH` correspondientes | alta |
+| 8.10 | **Backend:** crear tabla `incidencias (id, reserva_id, operario_id, tipo, descripcion, foto_url, created_at)` con FK a reservas y usuarios | alta |
+| 8.11 | **Backend:** endpoint `POST /api/reservas/:id/incidencias` (rol operario o admin) y serialización de incidencias e historial en `GET /api/reservas/:id` | alta |
+| 8.12 | Login con biometría (BiometricPrompt) sobre la sesión persistida                              | media     |
+| 8.13 | Subida de foto de incidencia: multipart al backend (con `multer`)                             | media     |
+| 8.14 | Push notifications al asignar reserva (FCM)                                                  | media     |
+| 8.15 | Modo offline: cola local con Room para confirmaciones e incidencias sin red, sync al reconectar | baja    |
+| 8.16 | Generación de APK/AAB firmada + canal de distribución interna (Play Console interna)         | baja      |
+
+> Justificación: una app nativa Android específica para el operario reduce la fricción a "abrir → ver lista → tocar confirmar". El registro de **quién** confirma, entrega y reporta incidencia da trazabilidad real, que hoy se pierde con anotaciones en papel.
 
 ## Fase 7 — Calidad de código y operaciones ⏳
 

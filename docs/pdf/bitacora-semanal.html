@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Bitácora Semanal — Stockly</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.55;
+    color: #1f2937;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5em 1em 3em;
+    font-size: 11pt;
+}
+.cover {
+    page-break-after: always;
+    text-align: center;
+    padding-top: 28vh;
+}
+.cover h1 {
+    font-size: 34pt;
+    margin: 0 0 .25em;
+    color: #0f172a;
+    border: none;
+}
+.cover .sub {
+    font-size: 14pt;
+    color: #64748b;
+    margin-bottom: 3em;
+}
+.cover .meta {
+    font-size: 10pt;
+    color: #94a3b8;
+}
+h1, h2, h3, h4 {
+    color: #0f172a;
+    margin-top: 1.6em;
+    margin-bottom: .5em;
+    line-height: 1.25;
+    page-break-after: avoid;
+}
+h1 { font-size: 22pt; border-bottom: 2px solid #e2e8f0; padding-bottom: .25em; }
+h2 { font-size: 15pt; border-bottom: 1px solid #e2e8f0; padding-bottom: .2em; }
+h3 { font-size: 12.5pt; color: #1e293b; }
+p { margin: .55em 0; }
+ul { margin: .4em 0 .9em 1.4em; }
+li { margin: .2em 0; }
+code {
+    font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+    background: #f1f5f9;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: .88em;
+    color: #be185d;
+}
+.day {
+    background: #f8fafc;
+    border-left: 4px solid #2563eb;
+    padding: .7em 1em .8em;
+    margin: 1em 0;
+    border-radius: 0 6px 6px 0;
+    page-break-inside: avoid;
+}
+.day h3 { margin: 0 0 .4em; }
+.commit-hash {
+    font-family: 'Cascadia Mono', 'Consolas', monospace;
+    color: #64748b;
+    font-size: .85em;
+}
+.stats {
+    display: inline-block;
+    font-size: .85em;
+    color: #475569;
+    margin-left: .5em;
+}
+.summary-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: 10pt;
+}
+.summary-table th, .summary-table td {
+    border: 1px solid #cbd5e1;
+    padding: .35em .6em;
+    text-align: left;
+}
+.summary-table th { background: #f1f5f9; font-weight: 600; }
+.summary-table tr:nth-child(even) td { background: #fafafa; }
+.footer-meta {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 9pt;
+    margin-top: 2em;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1em;
+}
+@page { margin: 18mm 14mm; size: A4; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <h1>Bitácora Semanal</h1>
+    <div class="sub">Resumen de añadidos — TFG DAM · Stockly</div>
+    <div class="meta">
+        Periodo: 11 — 17 de mayo de 2026<br>
+        Repositorio: <code>TFGDAM</code><br>
+        Generado el 2026-05-17
+    </div>
+</div>
+
+<h1>Resumen de la semana</h1>
+
+<p>Durante esta semana se han registrado <strong>15 commits</strong> sobre el repositorio del TFG, abarcando trabajo en el backend, frontend, el nuevo cliente Java (<code>stockly-cli</code>), instalador para Windows y la documentación del proyecto. Los hitos más relevantes han sido la incorporación del cliente Java con interfaz gráfica, la consolidación del instalador <code>.exe</code> y la mejora del frontend con historial de reservas y nueva topbar.</p>
+
+<table class="summary-table">
+    <thead>
+        <tr><th>Área</th><th>Cambios principales</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Backend</td><td>Mejoras en rutas de reservas, productos, categorías, auth y admin. Suite de tests con Vitest.</td></tr>
+        <tr><td>Frontend</td><td>Historial de reservas, nueva topbar, nuevas vistas y estilos, refactor de <code>app.js</code>.</td></tr>
+        <tr><td>Cliente Java</td><td>Creación de <code>stockly-cli</code> (CLI + GUI Swing) con login, productos, reservas e importación CSV.</td></tr>
+        <tr><td>Instalador</td><td>Scripts <code>.bat</code>/<code>.ps1</code>, instalador autoextraíble <code>Stockly-Setup.exe</code>.</td></tr>
+        <tr><td>Documentación</td><td>Actualización de BITACORA, ROADMAP, manuales móvil y hosting. Build de PDFs.</td></tr>
+    </tbody>
+</table>
+
+<h1>Cronología por día</h1>
+
+<h2>Lunes 11 de mayo</h2>
+
+<div class="day">
+    <h3>Añadido el cliente Java <span class="commit-hash">[3d3a8ac]</span></h3>
+    <p>Se incorpora el módulo <code>stockly-cli</code> en Java (Maven). Incluye:</p>
+    <ul>
+        <li>Estructura inicial con <code>Main.java</code>, configuración (<code>Config.java</code>) y cliente HTTP (<code>StocklyClient.java</code>).</li>
+        <li>Comandos: <code>Login</code>, <code>Products</code>, <code>LowStock</code>, <code>Reserve</code>, <code>Import</code> (CSV) y <code>Config</code>.</li>
+        <li><code>README.md</code> del módulo y CSV de ejemplo (<code>sample-productos.csv</code>).</li>
+    </ul>
+    <span class="stats">34 ficheros · +975 líneas</span>
+</div>
+
+<div class="day">
+    <h3>Servidor y lógica de autenticación <span class="commit-hash">[f3210ef]</span></h3>
+    <p>Refuerzo de <code>backend/server.js</code> y la capa de autenticación. <span class="stats">5 ficheros · +330 / −3</span></p>
+</div>
+
+<div class="day">
+    <h3>Scripts <code>start</code> y <code>stop</code> para Windows <span class="commit-hash">[c4eb3e3]</span></h3>
+    <p>Primeros <code>.bat</code> para arrancar y detener el entorno de desarrollo sin pasar por la terminal manualmente. <span class="stats">5 ficheros · +198 / −57</span></p>
+</div>
+
+<div class="day">
+    <h3>CLI: manejo de errores de API <span class="commit-hash">[e5c76c0]</span></h3>
+    <p>El cliente Java ahora gestiona errores HTTP de forma controlada (recompilación de <code>.class</code>).</p>
+</div>
+
+<h2>Martes 12 de mayo</h2>
+
+<div class="day">
+    <h3>Actualización mayor del frontend y rutas backend <span class="commit-hash">[d02eb9f]</span></h3>
+    <p>Gran reescritura de <code>frontend/app.js</code> (+982 líneas), nuevas vistas en <code>index.html</code> y ampliación de estilos. En el backend se enriquecen las rutas de <code>admin</code>, <code>auth</code>, <code>categorias</code>, <code>productos</code> y <code>reservas</code>. <span class="stats">9 ficheros · +1715 / −91</span></p>
+</div>
+
+<div class="day">
+    <h3>Pequeño fix en <code>StocklyClient.java</code> <span class="commit-hash">[60c13d0]</span></h3>
+    <p>Ajuste menor del cliente HTTP del módulo Java.</p>
+</div>
+
+<div class="day">
+    <h3>Cliente Java: GUI Swing añadida <span class="commit-hash">[2df4483]</span></h3>
+    <p>Se incorpora la interfaz gráfica del cliente:</p>
+    <ul>
+        <li><code>LoginFrame</code>, <code>MainFrame</code>, <code>ProductsPanel</code>, <code>ReservationsPanel</code> y <code>Theme</code>.</li>
+        <li>Nuevo comando <code>GuiCommand</code> y lanzadores <code>consola.bat</code>, <code>gui.bat</code>, <code>stockly.bat</code>, <code>demo.bat</code>.</li>
+    </ul>
+    <span class="stats">48 ficheros · +933 / −5</span>
+</div>
+
+<div class="day">
+    <h3>Refresco visual del frontend <span class="commit-hash">[ba9e81f]</span></h3>
+    <p>Ampliación de <code>styles.css</code> (+198) y nuevas funciones en <code>app.js</code>. <span class="stats">3 ficheros · +310 / −8</span></p>
+</div>
+
+<div class="day">
+    <h3>Reorganización general del proyecto <span class="commit-hash">[9fb9f69]</span></h3>
+    <p>Commit grande de saneamiento:</p>
+    <ul>
+        <li>Configuración de Prettier, ESLint y EditorConfig.</li>
+        <li>Suite de tests con Vitest: <code>auth.test.js</code>, <code>productos.test.js</code>, <code>reservas.test.js</code>, helpers y teardown global.</li>
+        <li>Reescritura amplia de <code>frontend/app.js</code> y <code>sw.js</code>.</li>
+    </ul>
+    <span class="stats">26 ficheros · +4481 / −526</span>
+</div>
+
+<h2>Miércoles 13 de mayo</h2>
+
+<div class="day">
+    <h3>Nueva topbar <span class="commit-hash">[bf17145]</span></h3>
+    <p>Rediseño de la barra superior del frontend (HTML, CSS y JS). <span class="stats">3 ficheros · +25 / −10</span></p>
+</div>
+
+<div class="day">
+    <h3>Primer instalador para Windows <span class="commit-hash">[4904da7]</span></h3>
+    <p>Se añaden scripts <code>install.bat</code>, <code>install.ps1</code>, <code>start.bat</code>, <code>stop.bat</code> y <code>reset_mysql.bat</code> bajo <code>scripts/</code>. <span class="stats">6 ficheros · +268 / −6</span></p>
+</div>
+
+<h2>Jueves 14 de mayo</h2>
+
+<div class="day">
+    <h3>Instalador autoextraíble <code>Stockly-Setup.exe</code> <span class="commit-hash">[388ec39]</span></h3>
+    <p>Se añade el ejecutable empaquetado y los scripts que lo construyen:</p>
+    <ul>
+        <li><code>installer/build-installer.bat</code> y plantillas SED.</li>
+        <li><code>installer/install-full.bat</code> con el flujo completo.</li>
+        <li><code>install.bat</code> y <code>start.bat</code> reforzados a nivel raíz.</li>
+    </ul>
+    <span class="stats">8 ficheros · +672 / −25</span>
+</div>
+
+<h2>Sábado 16 de mayo</h2>
+
+<div class="day">
+    <h3>Documentación y batch files actualizados <span class="commit-hash">[b1411a9]</span></h3>
+    <p>Actualización de la documentación del proyecto:</p>
+    <ul>
+        <li><code>docs/BITACORA.md</code>, <code>docs/ROADMAP.md</code> y nuevo <code>docs/mobile.md</code>.</li>
+        <li>Generación de PDFs en <code>docs/pdf/</code> (BITACORA, ROADMAP, manuales).</li>
+        <li>Mejora de los <code>.bat</code> de <code>stockly-cli</code> y de <code>install.bat</code>.</li>
+    </ul>
+    <span class="stats">14 ficheros · +470 / −68</span>
+</div>
+
+<div class="day">
+    <h3>Historial de reservas <span class="commit-hash">[de1d016]</span></h3>
+    <p>Se añade vista de historial en el frontend y endpoint asociado en <code>routes/reservas.js</code>. <span class="stats">3 ficheros · +91 / −31</span></p>
+</div>
+
+<div class="day">
+    <h3>Funcionalidad de página <span class="commit-hash">[e1e9caf]</span></h3>
+    <p>Última iteración de la semana: nuevas funciones en la vista principal y refuerzo de <code>routes/reservas.js</code>. <span class="stats">4 ficheros · +257 / −4</span></p>
+</div>
+
+<h1>Conclusiones</h1>
+
+<p>La semana ha consolidado tres grandes pilares del TFG:</p>
+<ul>
+    <li><strong>Cliente Java</strong> operativo, con CLI y GUI Swing capaces de hablar con la API.</li>
+    <li><strong>Distribución</strong> en Windows mediante instalador autoextraíble y scripts de arranque.</li>
+    <li><strong>Calidad</strong> del código: linter, formateador y batería de tests con Vitest.</li>
+</ul>
+<p>Quedan como tareas inmediatas pulir el historial de reservas, ampliar la cobertura de tests y revisar la documentación móvil y de hosting antes de la entrega.</p>
+
+<div class="footer-meta">Stockly · TFG DAM 2025-2026 · Bitácora semanal generada automáticamente</div>
+
+</body>
+</html>

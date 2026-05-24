@@ -207,7 +207,7 @@ router.get('/:id', authRequired, async (req, res) => {
         const [[base]] = await pool.query(
             `SELECT r.*, u.nombre AS usuario, u.email AS usuario_email,
                     p.id AS producto_id, p.sku, p.nombre AS producto,
-                    p.descripcion AS producto_descripcion, p.ubicacion, p.precio, p.unidad
+                    p.descripcion AS producto_descripcion, p.ubicacion, p.precio
                FROM reservas r
                JOIN usuarios  u ON u.id = r.usuario_id
                JOIN productos p ON p.id = r.producto_id

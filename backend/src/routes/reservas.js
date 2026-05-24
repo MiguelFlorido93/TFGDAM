@@ -88,7 +88,18 @@ async function transitarReserva(conn, id, accion, user) {
 
     if (accion === 'confirmar') {
         if (r.estado !== 'pendiente') throw new Error('Sólo se pueden confirmar reservas pendientes');
-        await conn.query("UPDATE reservas SET estado = 'confirmada' WHERE id = ?", [id]);
+        // Registramos quién confirma (columna añadida por migración M001).
+        // Si la migración aún no se aplicó, hacemos fallback al UPDATE original.
+        try {
+            await conn.query(
+                "UPDATE reservas SET estado = 'confirmada', confirmada_por_id = ? WHERE id = ?",
+                [user.id, id]
+            );
+        } catch (e) {
+            if (/Unknown column/i.test(e.message)) {
+                await conn.query("UPDATE reservas SET estado = 'confirmada' WHERE id = ?", [id]);
+            } else throw e;
+        }
         return;
     }
 
@@ -101,7 +112,17 @@ async function transitarReserva(conn, id, accion, user) {
             'UPDATE productos SET stock = stock - ?, stock_reservado = GREATEST(0, stock_reservado - ?) WHERE id = ?',
             [r.cantidad, r.cantidad, r.producto_id]
         );
-        await conn.query("UPDATE reservas SET estado = 'entregada', fecha_entrega = NOW() WHERE id = ?", [id]);
+        // Registramos quién entrega (columna añadida por migración M001).
+        try {
+            await conn.query(
+                "UPDATE reservas SET estado = 'entregada', fecha_entrega = NOW(), entregada_por_id = ? WHERE id = ?",
+                [user.id, id]
+            );
+        } catch (e) {
+            if (/Unknown column/i.test(e.message)) {
+                await conn.query("UPDATE reservas SET estado = 'entregada', fecha_entrega = NOW() WHERE id = ?", [id]);
+            } else throw e;
+        }
         await conn.query(
             `INSERT INTO movimientos (producto_id, usuario_id, tipo, cantidad, stock_anterior, stock_posterior, motivo)
              VALUES (?, ?, 'salida', ?, ?, ?, ?)`,
@@ -176,6 +197,101 @@ router.get('/', authRequired, async (req, res) => {
         params
     );
     res.json(rows);
+});
+
+// GET /api/reservas/:id  → detalle enriquecido para la app móvil
+// Incluye nombres de quien confirmó/entregó (si las columnas existen) y
+// la lista de incidencias asociadas (si la tabla existe).
+router.get('/:id', authRequired, async (req, res) => {
+    try {
+        const [[base]] = await pool.query(
+            `SELECT r.*, u.nombre AS usuario, u.email AS usuario_email,
+                    p.id AS producto_id, p.sku, p.nombre AS producto,
+                    p.descripcion AS producto_descripcion, p.ubicacion, p.precio, p.unidad
+               FROM reservas r
+               JOIN usuarios  u ON u.id = r.usuario_id
+               JOIN productos p ON p.id = r.producto_id
+              WHERE r.id = ?`,
+            [req.params.id]
+        );
+        if (!base) return res.status(404).json({ error: 'Reserva no encontrada' });
+
+        // Cliente solo puede ver SUS reservas.
+        if (req.user.rol === 'cliente' && base.usuario_id !== req.user.id) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+
+        // Nombres de quién confirmó/entregó (las columnas pueden no existir
+        // si la migración M001 aún no se aplicó; en ese caso `base.confirmada_por_id`
+        // será undefined y nos saltamos el lookup).
+        let confirmada_por = null;
+        let entregada_por = null;
+        if (base.confirmada_por_id) {
+            const [[u]] = await pool.query('SELECT id, nombre, email FROM usuarios WHERE id = ?', [base.confirmada_por_id]);
+            if (u) confirmada_por = u;
+        }
+        if (base.entregada_por_id) {
+            const [[u]] = await pool.query('SELECT id, nombre, email FROM usuarios WHERE id = ?', [base.entregada_por_id]);
+            if (u) entregada_por = u;
+        }
+
+        // Incidencias asociadas (si la tabla existe)
+        let incidencias = [];
+        try {
+            const [rows] = await pool.query(
+                `SELECT i.id, i.tipo, i.descripcion, i.creado_en,
+                        u.id AS operario_id, u.nombre AS operario, u.email AS operario_email
+                   FROM incidencias i
+              LEFT JOIN usuarios u ON u.id = i.operario_id
+                  WHERE i.reserva_id = ?
+                  ORDER BY i.creado_en DESC`,
+                [req.params.id]
+            );
+            incidencias = rows;
+        } catch (e) {
+            if (!/doesn't exist|no existe/i.test(e.message)) throw e;
+        }
+
+        res.json({ ...base, confirmada_por, entregada_por, incidencias });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST /api/reservas/:id/incidencias  (operario/admin)
+// body: { tipo: 'rotura'|'faltante'|'mal_estado'|'otro', descripcion: string }
+router.post('/:id/incidencias', authRequired, requireRole('admin', 'operario'), async (req, res) => {
+    const tiposValidos = ['rotura', 'faltante', 'mal_estado', 'otro'];
+    const tipo = tiposValidos.includes(req.body?.tipo) ? req.body.tipo : 'otro';
+    const descripcion = String(req.body?.descripcion || '').trim();
+    if (!descripcion) return res.status(400).json({ error: 'Descripción obligatoria' });
+    if (descripcion.length > 2000) return res.status(400).json({ error: 'Descripción demasiado larga' });
+
+    try {
+        // Verificar que la reserva existe (para devolver 404 limpio)
+        const [[r]] = await pool.query('SELECT id FROM reservas WHERE id = ?', [req.params.id]);
+        if (!r) return res.status(404).json({ error: 'Reserva no encontrada' });
+
+        const [ins] = await pool.query(
+            `INSERT INTO incidencias (reserva_id, operario_id, tipo, descripcion)
+             VALUES (?, ?, ?, ?)`,
+            [req.params.id, req.user.id, tipo, descripcion]
+        );
+        const [[incidencia]] = await pool.query(
+            `SELECT i.id, i.tipo, i.descripcion, i.creado_en,
+                    u.id AS operario_id, u.nombre AS operario, u.email AS operario_email
+               FROM incidencias i
+          LEFT JOIN usuarios u ON u.id = i.operario_id
+              WHERE i.id = ?`,
+            [ins.insertId]
+        );
+        res.status(201).json(incidencia);
+    } catch (e) {
+        if (/doesn't exist|no existe/i.test(e.message)) {
+            return res.status(503).json({ error: 'Tabla de incidencias no creada — reinicia el servicio' });
+        }
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // POST /api/reservas

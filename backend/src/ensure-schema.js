@@ -25,6 +25,61 @@ async function tablaExiste(nombre) {
     return rows[0].n > 0;
 }
 
+async function columnaExiste(tabla, columna) {
+    const [rows] = await pool.query(
+        `SELECT COUNT(*) AS n FROM information_schema.columns
+         WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+        [tabla, columna]
+    );
+    return rows[0].n > 0;
+}
+
+// Migraciones incrementales — idempotentes, se ejecutan siempre tras el bootstrap.
+// Cualquier migración nueva se añade aquí y se ejecuta una vez por instancia.
+async function aplicarMigraciones() {
+    // M001 — Trazabilidad de operario en reservas (necesario para la app móvil)
+    if (await tablaExiste('reservas')) {
+        if (!(await columnaExiste('reservas', 'confirmada_por_id'))) {
+            await pool.query(
+                `ALTER TABLE reservas
+                 ADD COLUMN confirmada_por_id INT NULL,
+                 ADD INDEX idx_confirmada_por (confirmada_por_id),
+                 ADD CONSTRAINT fk_reservas_confirmada_por
+                   FOREIGN KEY (confirmada_por_id) REFERENCES usuarios(id) ON DELETE SET NULL`
+            );
+            console.log('🔧 M001 → reservas.confirmada_por_id añadido');
+        }
+        if (!(await columnaExiste('reservas', 'entregada_por_id'))) {
+            await pool.query(
+                `ALTER TABLE reservas
+                 ADD COLUMN entregada_por_id INT NULL,
+                 ADD INDEX idx_entregada_por (entregada_por_id),
+                 ADD CONSTRAINT fk_reservas_entregada_por
+                   FOREIGN KEY (entregada_por_id) REFERENCES usuarios(id) ON DELETE SET NULL`
+            );
+            console.log('🔧 M001 → reservas.entregada_por_id añadido');
+        }
+    }
+
+    // M002 — Tabla incidencias (alimentada por la app móvil del operario)
+    if (!(await tablaExiste('incidencias'))) {
+        await pool.query(`
+            CREATE TABLE incidencias (
+                id            INT AUTO_INCREMENT PRIMARY KEY,
+                reserva_id    INT NOT NULL,
+                operario_id   INT NULL,
+                tipo          ENUM('rotura','faltante','mal_estado','otro') NOT NULL DEFAULT 'otro',
+                descripcion   TEXT NOT NULL,
+                creado_en     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_reserva (reserva_id),
+                INDEX idx_operario (operario_id),
+                CONSTRAINT fk_incidencias_reserva FOREIGN KEY (reserva_id) REFERENCES reservas(id) ON DELETE CASCADE,
+                CONSTRAINT fk_incidencias_operario FOREIGN KEY (operario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+            )`);
+        console.log('🔧 M002 → tabla incidencias creada');
+    }
+}
+
 /**
  * Divide un bloque SQL en statements ejecutables uno por uno.
  * Quita comentarios `--` y separa por `;` al final de línea / EOF.
@@ -147,8 +202,17 @@ async function seedProductos(conn) {
 }
 
 module.exports = async function ensureSchema() {
+    // Si las tablas base ya existen, sólo aplicamos migraciones incrementales
+    // (idempotentes) y salimos. No re-aplicamos schema.sql.
     try {
-        if (await tablaExiste('usuarios')) return false; // ya está
+        if (await tablaExiste('usuarios')) {
+            try {
+                await aplicarMigraciones();
+            } catch (e) {
+                console.warn('Fallo aplicando migraciones incrementales:', e.message);
+            }
+            return false;
+        }
     } catch (e) {
         console.warn('No se pudo comprobar si existe el schema:', e.message);
         return false;
@@ -197,6 +261,13 @@ module.exports = async function ensureSchema() {
 
         await ejecutar(post, 'post-productos');
         console.log(`   • ${post.length} statements post-productos OK`);
+
+        // Migraciones incrementales sobre el schema recién creado.
+        try {
+            await aplicarMigraciones();
+        } catch (e) {
+            console.warn('Fallo aplicando migraciones tras bootstrap:', e.message);
+        }
 
         console.log('✅ Schema aplicado.');
         return true;

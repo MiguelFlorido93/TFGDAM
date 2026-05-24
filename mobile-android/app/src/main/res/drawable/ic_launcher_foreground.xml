@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Letra S estilizada en ocre Stockly -->
+    <path
+        android:fillColor="#A8601A"
+        android:pathData="M62,38c-2,-4 -7,-6 -12,-6c-7,0 -12,4 -12,10c0,6 5,8 12,10l4,1c10,2 18,7 18,17c0,11 -10,18 -22,18c-9,0 -18,-4 -22,-13l8,-4c2,5 8,9 14,9c7,0 13,-4 13,-10c0,-6 -6,-9 -14,-11l-4,-1c-9,-2 -16,-7 -16,-16c0,-10 9,-17 21,-17c8,0 16,3 20,10z" />
+</vector>

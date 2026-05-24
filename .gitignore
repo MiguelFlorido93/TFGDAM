@@ -39,3 +39,16 @@ Thumbs.db
 
 # Instalador local: Node/MySQL/JDK descargados y data de MySQL
 runtime/
+
+# Android Studio / Gradle (mobile-android/)
+.gradle/
+**/.gradle/
+local.properties
+**/local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.keystore
+*.jks

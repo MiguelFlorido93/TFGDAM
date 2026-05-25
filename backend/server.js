@@ -71,6 +71,26 @@ app.use('/api/productos', require('./src/routes/productos'));
 app.use('/api/reservas', require('./src/routes/reservas'));
 app.use('/api/admin', require('./src/routes/admin'));
 
+// ---------- Swagger UI (documentación interactiva) ----------
+// Mount BEFORE el 404 handler, después de las rutas reales.
+const swaggerUi = require('swagger-ui-express');
+const openapiSpec = require('./src/openapi');
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, {
+    customSiteTitle: 'Stockly API · Docs',
+    swaggerOptions: { persistAuthorization: true, displayRequestDuration: true },
+}));
+// Permite descargar el JSON de la spec por si se quiere usar con Postman/etc.
+app.get('/api/openapi.json', (_req, res) => res.json(openapiSpec));
+
+// Pequeño índice JSON en /api para que no devuelva 404 cuando se abre directamente.
+app.get('/api', (_req, res) => res.json({
+    name: 'Stockly API',
+    version: openapiSpec.info.version,
+    docs: '/api/docs',
+    openapi: '/api/openapi.json',
+    health: '/api/health',
+}));
+
 // Error handler genérico
 app.use((err, _req, res, _next) => {
     console.error(err);

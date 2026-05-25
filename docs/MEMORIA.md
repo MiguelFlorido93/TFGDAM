@@ -145,7 +145,7 @@ Navegador (PWA)      Android nativo (Kotlin)
        (5 tablas · FK · índices)
 ```
 
-> Diagramas de arquitectura y despliegue en `docs/diagrams/` *(pendiente — ROADMAP 4.8)*.
+> Diagramas disponibles en [`docs/diagrams/arquitectura-despliegue.drawio`](diagrams/arquitectura-despliegue.drawio) (2 páginas: arquitectura lógica por capas y diagrama de despliegue Railway). Exportar como PNG/SVG desde draw.io para incluir en el documento final.
 
 ---
 

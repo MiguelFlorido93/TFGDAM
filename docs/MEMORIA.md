@@ -354,27 +354,60 @@ Tres ampliaciones (ROADMAP 8.9-8.11):
 
 # 7. Despliegue e infraestructura
 
-> **Estado actual:** corre en local (`localhost:3001`) lanzado por `start.bat`. Desplegar en cloud es la siguiente tarea crítica (ROADMAP 4.0).
+El sistema está desplegado y accesible públicamente en **Railway**, plataforma PaaS que gestiona el servidor Node.js y la base de datos MySQL de forma independiente y las conecta automáticamente. El código del repositorio es el origen de cada despliegue.
 
 ## 7.1 Variables de entorno
 
-`PORT`, `DB_HOST/PORT/USER/PASSWORD/NAME`, `JWT_SECRET` (auto-generado), `JWT_EXPIRATION`, `NODE_ENV`. Ver §4.2.
+Railway inyecta las variables en tiempo de ejecución, sin fichero `.env` en producción. Variables configuradas en el panel:
 
-## 7.2-7.4 Backend, BD y servicios cloud
+| Variable         | Descripción                                                      |
+|------------------|------------------------------------------------------------------|
+| `MYSQL_URL`      | Referencia dinámica al plugin MySQL de Railway (host, puerto, credenciales). |
+| `NODE_ENV`       | `production`                                                     |
+| `JWT_SECRET`     | Secreto ≥ 256 bits generado con `crypto.randomBytes(64)`.       |
+| `JWT_EXPIRES_IN` | `8h`                                                             |
+| `CORS_ORIGIN`    | `https://tfgdam-production.up.railway.app`                       |
+| `PORT`           | Asignado automáticamente por Railway.                            |
 
-Opciones evaluadas (ver `docs/hosting.md`): **Render** (managed, HTTPS y deploy desde GitHub automáticos; preferencia actual), **Fly.io** (control fino, Firecracker, `fly.toml`), **VPS** (Hetzner/DO/OVH) **+ Caddy** (máximo control, Let's Encrypt automatizado). MySQL gestionado en Railway/PlanetScale o contenedor MySQL en el mismo VPS. Dominio en Namecheap o Cloudflare Registrar.
+El fichero `backend/.env.example` documenta todas las variables necesarias para arrancar en local.
 
-## 7.5 Git y GitHub
+## 7.2 Despliegue del backend
 
-Repositorio único, estrategia *trunk-based* con commits directos a `main` para el ritmo TFC. Convenciones: `feat:`, `fix:`, `docs:`.
+Railway detecta `nixpacks.toml` en la raíz del repositorio y ejecuta automáticamente:
+
+1. **Build:** `cd backend && npm ci --omit=dev` (solo dependencias de producción).
+2. **Start:** `cd backend && node server.js`.
+
+`railway.json` define el healthcheck (`GET /api/health`), la política de reinicio en fallo y el número máximo de reintentos (5). El backend escucha en `0.0.0.0:$PORT` con `trust proxy` activo para que Express reciba la IP real detrás del proxy de Railway.
+
+## 7.3 Base de datos
+
+Railway gestiona una instancia **MySQL 8** como servicio independiente dentro del mismo proyecto. La conexión se inyecta como `MYSQL_URL` (formato `mysql://user:pass@host:port/db`). Al primer arranque, `backend/src/ensure-schema.js` detecta que la tabla `usuarios` no existe y aplica `db/schema.sql` completo, incluyendo semillas de prueba. Los redespliegues no tocan los datos porque el schema solo se aplica si las tablas están vacías.
+
+## 7.4 Servicios cloud y hosting
+
+| Componente    | Servicio                  | Notas                                      |
+|---------------|---------------------------|--------------------------------------------|
+| Backend API   | Railway (Node.js)         | Nixpacks, reinicio automático en fallo.    |
+| Base de datos | Railway MySQL Plugin      | Persistencia entre deploys, backups diarios. |
+| Frontend PWA  | Servido por el propio backend | Mismo origen → sin problemas de CORS.  |
+| TLS/HTTPS     | Gestionado por Railway    | Certificado automático en el subdominio.   |
+
+## 7.5 Control de versiones
+
+Repositorio en GitHub (`husslesnake/tfgdam`). Estrategia *trunk-based*: commits directos a `main` con convenciones `feat:`, `fix:`, `docs:`, `chore:`. Cada push a `main` dispara automáticamente un nuevo deploy en Railway.
 
 ## 7.6 CI/CD
 
-Pipeline previsto (`.github/workflows/ci.yml`): lint (ESLint) → tests (Vitest contra MySQL en *service container*) → deploy en `main` (`render-deploy-action` o `fly deploy`).
+El pipeline de despliegue continuo está activo: Railway escucha el webhook de GitHub y redespliega en cada push a `main`. Las comprobaciones de calidad (lint ESLint + tests Vitest) se ejecutan localmente antes de hacer push; la integración de un workflow formal en `.github/workflows/ci.yml` queda como mejora futura.
 
-## 7.7 Acceso público
+## 7.7 Acceso público al sistema
 
-Tras desplegar: `https://<dominio>` para la web, `https://<dominio>/api/*` para la API. La app móvil consumirá la misma URL.
+| Recurso              | URL                                                          |
+|----------------------|--------------------------------------------------------------|
+| Aplicación web (PWA) | https://tfgdam-production.up.railway.app/                    |
+| API REST             | https://tfgdam-production.up.railway.app/api/                |
+| Health check         | https://tfgdam-production.up.railway.app/api/health          |
 
 ---
 

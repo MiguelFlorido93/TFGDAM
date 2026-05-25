@@ -118,7 +118,7 @@ Autorización en dos capas: middleware Express `requireRole` en cada ruta proteg
 
 **CU-05 Importar CSV.** Admin selecciona CSV con cabecera esperada → previsualización con filas válidas / con error → confirma → inserción en transacción.
 
-> Diagramas UML en `docs/diagrams/casos-de-uso.drawio` *(pendiente de exportar — ROADMAP 4.8)*.
+> Diagrama UML disponible en [`docs/diagrams/casos-de-uso.drawio`](diagrams/casos-de-uso.drawio). Para incluirlo en el documento final, exportar como PNG/SVG desde draw.io (File → Export).
 
 ## 2.6 Diseño de interfaces (Figma)
 

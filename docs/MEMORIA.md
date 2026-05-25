@@ -200,7 +200,18 @@ Cada ruta es un router Express que importa el pool y el middleware. La lógica v
 
 `backend/package.json` declara dependencias y scripts (`npm start`, `npm test`, `npm run lint`). Variables de entorno en `backend/.env`, generado desde `backend/.env.example`:
 
-![Plantilla backend/.env.example](screenshots/01-env-example.png)
+```ini
+# backend/.env.example
+PORT=3001
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=stockly
+JWT_SECRET=cambia-esto-por-una-cadena-larga-y-aleatoria
+JWT_EXPIRES_IN=8h
+NODE_ENV=development
+```
 
 ## 4.3 Conexión a la BD
 
@@ -238,7 +249,17 @@ Middleware final `app.use((err, req, res, next) => …)` serializa cualquier exc
 
 Login: `bcrypt.compare` valida la contraseña; el servidor firma un JWT HS256 con `{ id, email, rol }` y expiración 7 días. El secreto se genera al primer arranque y se persiste en `.env`. Rate limiting en `/api/auth` (30/15 min). El cliente guarda el token en `localStorage` y lo envía en `Authorization: Bearer …`. El middleware `authRequired` decodifica/verifica; `requireRole(...roles)` comprueba `req.user.rol`:
 
-![requireRole en backend/src/middleware/auth.js](screenshots/03-require-role.png)
+```javascript
+// backend/src/middleware/auth.js
+function requireRole(...roles) {
+    return (req, res, next) => {
+        if (!req.user) return res.status(401).json({ error: 'No autenticado' });
+        if (!roles.includes(req.user.rol))
+            return res.status(403).json({ error: 'Permisos insuficientes' });
+        next();
+    };
+}
+```
 
 Cada router declara explícitamente el nivel de auth necesario, p. ej. `router.delete('/:id', authRequired, requireRole('admin'), …)` en `productos.js`.
 
@@ -282,7 +303,23 @@ Vistas: `login`, `catalogo`, `mis-reservas`, `cola`, `dashboard`, `inventario`, 
 
 Wrapper `api(path, opts)` en `frontend/app.js` (líneas 59-72): inyecta `Authorization: Bearer <token>`, maneja 401 con logout automático y serializa la respuesta:
 
-![Wrapper api() en frontend/app.js](screenshots/02-api-wrapper.png)
+```javascript
+// frontend/app.js
+async function api(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    if (state.token) headers.Authorization = `Bearer ${state.token}`;
+    const r = await fetch(`${API}${path}`, { ...opts, headers });
+    const data = r.headers.get('content-type')?.includes('application/json')
+        ? await r.json() : await r.text();
+    const esEndpointAuth = path === '/auth/login' || path === '/auth/register';
+    if (r.status === 401 && state.token && !esEndpointAuth) {
+        cerrarSesion();
+        throw new Error('Sesión expirada');
+    }
+    if (!r.ok) throw new Error(data.error || data || `HTTP ${r.status}`);
+    return data;
+}
+```
 
 ## 5.4 Sesiones y login
 
@@ -613,19 +650,109 @@ Manual detallado con capturas paso a paso pendiente en `docs/manual-usuario.md`.
 
 Handler `POST /api/reservas`: transacción que bloquea la fila del producto con `SELECT … FOR UPDATE`, comprueba el stock disponible, incrementa `stock_reservado`, inserta la reserva y registra el movimiento. Rollback si falla; commit al final.
 
-![POST /api/reservas con FOR UPDATE](screenshots/04-reserva-for-update.png)
+```javascript
+// backend/src/routes/reservas.js — POST /api/reservas
+router.post('/', authRequired, async (req, res) => {
+    const { producto_id, cantidad, fecha_recogida, notas } = req.body || {};
+    if (!producto_id || !cantidad || cantidad < 1)
+        return res.status(400).json({ error: 'Datos inválidos' });
+
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+        const [[prod]] = await conn.query(
+            'SELECT stock, stock_reservado FROM productos WHERE id = ? AND activo = 1 FOR UPDATE',
+            [producto_id]
+        );
+        if (!prod) { await conn.rollback(); return res.status(404).json({ error: 'Producto inexistente' }); }
+
+        const disponible = prod.stock - prod.stock_reservado;
+        if (cantidad > disponible) {
+            await conn.rollback();
+            return res.status(409).json({ error: `Stock insuficiente (disponible: ${disponible})` });
+        }
+        await conn.query(
+            'UPDATE productos SET stock_reservado = stock_reservado + ? WHERE id = ?',
+            [cantidad, producto_id]
+        );
+        const [ins] = await conn.query(
+            'INSERT INTO reservas (usuario_id, producto_id, cantidad, fecha_recogida, notas) VALUES (?, ?, ?, ?, ?)',
+            [req.user.id, producto_id, cantidad, fecha_recogida || null, notas || null]
+        );
+        await conn.query(
+            "INSERT INTO movimientos (producto_id, usuario_id, tipo, cantidad, stock_anterior, stock_posterior, motivo) VALUES (?, ?, 'reserva', ?, ?, ?, ?)",
+            [producto_id, req.user.id, cantidad, prod.stock, prod.stock, `Reserva #${ins.insertId}`]
+        );
+        await conn.commit();
+        res.status(201).json({ id: ins.insertId });
+    } catch (e) {
+        await conn.rollback();
+        res.status(500).json({ error: e.message });
+    } finally {
+        conn.release();
+    }
+});
+```
 
 ### D.2 Service Worker de autodesregistro (`frontend/sw.js`)
 
 SW que limpia las cachés del SW antiguo (`stockly-v1`, que cacheaba `app.js` con `http://localhost:3001/api` hardcodeada) y se elimina al activarse. Resuelve PWA "pegadas" en una versión vieja del shell. Para offline real está prevista una nueva versión (ROADMAP).
 
-![frontend/sw.js (Service Worker de autodesregistro)](screenshots/05-service-worker.png)
+```javascript
+// frontend/sw.js — Service Worker de autodesregistro
+self.addEventListener('install', () => self.skipWaiting());
+
+self.addEventListener('activate', e => {
+    e.waitUntil((async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+        await self.registration.unregister();
+        const clients = await self.clients.matchAll({ type: 'window' });
+        clients.forEach(c => c.navigate(c.url));
+    })());
+});
+
+self.addEventListener('fetch', () => {}); // sin caché — red directa
+```
 
 ### D.3 Capa de red Android (Kotlin)
 
 `StocklyApi.kt` en `mobile-android/app/src/main/java/com/stockly/app/network/`: interfaz Retrofit con los endpoints + factory `StocklyApiFactory.build()` que monta el `OkHttpClient` con `AuthInterceptor` que inyecta el JWT desde `TokenStore`.
 
-![StocklyApi.kt (Retrofit + OkHttp con AuthInterceptor)](screenshots/06-kotlin-retrofit.png)
+```kotlin
+// mobile-android/.../data/StocklyApi.kt
+interface StocklyApi {
+    @POST("api/auth/login")
+    suspend fun login(@Body body: LoginRequest): LoginResponse
+
+    @GET("api/reservas")
+    suspend fun reservas(
+        @Query("estado") estado: String? = null,
+        @Query("activas") activas: Int? = null,
+    ): List<ReservaListItem>
+
+    @GET("api/reservas/{id}")
+    suspend fun reserva(@Path("id") id: Int): ReservaDetalle
+
+    @PATCH("api/reservas/{id}/estado")
+    suspend fun cambiarEstado(@Path("id") id: Int, @Body body: EstadoRequest): OkResponse
+
+    @POST("api/reservas/{id}/incidencias")
+    suspend fun crearIncidencia(@Path("id") id: Int, @Body body: CrearIncidenciaRequest): Incidencia
+}
+
+object ApiClient {
+    fun build(tokenStore: TokenStore): StocklyApi = Retrofit.Builder()
+        .baseUrl(BuildConfig.API_BASE_URL)
+        .client(OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor(tokenStore))
+            .build())
+        .addConverterFactory(Json { ignoreUnknownKeys = true }
+            .asConverterFactory("application/json".toMediaType()))
+        .build()
+        .create(StocklyApi::class.java)
+}
+```
 
 ---
 

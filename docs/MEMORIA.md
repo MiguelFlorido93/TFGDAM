@@ -67,7 +67,7 @@ Aplicar de forma cohesionada los contenidos del ciclo: modelado de datos, API RE
 
 ## 2.1 Descripción general
 
-Stockly consta de tres componentes: (1) **backend** Node/Express con API REST `/api/auth`, `/api/productos`, `/api/categorias`, `/api/reservas`, `/api/admin`; (2) **frontend PWA** servido por el propio backend, con modo offline básico; (3) **app móvil Android nativa** (Kotlin, en desarrollo) específica para el operario. El sistema gestiona catálogo, reservas con estado (pendiente / confirmada / cancelada / entregada), auditoría automática de movimientos, dashboard con KPIs, importación CSV y albarán imprimible.
+Stockly consta de tres componentes: (1) **backend** Node/Express con API REST `/api/auth`, `/api/productos`, `/api/categorias`, `/api/reservas`, `/api/admin`; (2) **frontend PWA** servido por el propio backend, con modo offline básico; (3) **app móvil Android nativa** (Kotlin + Jetpack Compose) específica para el operario. El sistema gestiona catálogo, reservas con estado (pendiente / confirmada / cancelada / entregada), auditoría automática de movimientos, dashboard con KPIs, importación CSV y albarán imprimible.
 
 ## 2.2 Roles de usuario
 
@@ -222,9 +222,13 @@ Cada ruta es un router Express que importa el pool y el middleware. La lógica v
 | GET    | /api/admin/stats              | admin     |
 | POST   | /api/admin/usuarios           | admin     |
 
-## 4.5 CRUD y 4.6 Validaciones
+## 4.5 CRUD
 
-Cada entidad sigue GET (lista/detalle), POST (crear), PUT/PATCH (editar), DELETE (eliminar). Validación manual en cada handler (`if (!body.nombre) return res.status(400)…`); pendiente migrar a Zod para esquemas centralizados (ROADMAP 7.4).
+Cada entidad sigue GET (lista/detalle), POST (crear), PUT/PATCH (editar), DELETE (eliminar). Los handlers de Express consultan directamente la capa `db/` mediante `mysql2/promise` con consultas parametrizadas.
+
+## 4.6 Validaciones
+
+Validación manual en cada handler (`if (!body.nombre) return res.status(400)…`). Se validan campos requeridos, tipos y rangos antes de ejecutar la consulta; el error retorna con código 400 y mensaje descriptivo. Migración a Zod para esquemas centralizados está planificada como mejora futura.
 
 ## 4.7 Manejo global de errores
 
@@ -298,7 +302,22 @@ Errores de red o 4xx/5xx → toast con el mensaje del backend. 401 → logout. 4
 
 ## 5.8 Capturas de la aplicación
 
-> Capturas exportadas en `docs/screenshots/app/` *(pendiente de añadir)*.
+Pantallas clave a documentar con captura:
+
+| # | Pantalla | Rol |
+|---|----------|-----|
+| 01 | Login | Todos |
+| 02 | Catálogo con filtros y búsqueda | Cliente / Operario |
+| 03 | Detalle de producto + modal reserva | Cliente |
+| 04 | Mis reservas (cliente) | Cliente |
+| 05 | Cola de reservas (operario) | Operario |
+| 06 | Dashboard KPIs | Admin |
+| 07 | Inventario — CRUD productos | Admin |
+| 08 | Gestión de usuarios | Admin |
+| 09 | Modo oscuro activo | Admin |
+| 10 | PWA instalada en escritorio Windows | Todos |
+
+> Capturas a exportar en `docs/screenshots/app/` una vez ejecutada la app en `https://tfgdam-production.up.railway.app/`.
 
 ---
 
@@ -368,7 +387,16 @@ Lo implementado cubre el flujo principal del operario. Quedan como mejoras futur
 
 ## 6.7 Capturas
 
-> Pendientes de añadir.
+Pantallas clave a documentar con captura del dispositivo:
+
+| # | Pantalla | Descripción |
+|---|----------|-------------|
+| 01 | LoginScreen | Campos email/password, botón entrar |
+| 02 | ListaReservasScreen | Lista de reservas activas con estado chip |
+| 03 | DetalleReservaScreen | Datos completos + botones Confirmar/Entregar |
+| 04 | IncidenciaFormScreen | Formulario tipo de incidencia + descripción |
+
+> Capturas a añadir en `docs/screenshots/android/` desde dispositivo físico o emulador Android con el APK generado.
 
 ---
 
@@ -525,7 +553,7 @@ Histórico completo en [`docs/BITACORA.md`](docs/BITACORA.md).
 
 ## 11.1 Resultados
 
-Aplicación web funcional instalable como PWA, catálogo de 500 productos, gestión completa de reservas con concurrencia, dashboard, sistema de diseño propio iterado en tres versiones, tests automatizados sobre flujos críticos e instaladores Windows para uso sin conocimientos previos.
+Aplicación web funcional instalable como PWA, catálogo de 500 productos, gestión completa de reservas con concurrencia, dashboard, sistema de diseño propio iterado en tres versiones, tests automatizados sobre flujos críticos, instaladores Windows para uso sin conocimientos previos, **app Android nativa funcional** (login, lista de reservas, detalle, formulario de incidencias, sesión cifrada con EncryptedSharedPreferences) y **despliegue en producción** accesible públicamente en Railway.
 
 ## 11.2 Problemas encontrados
 
@@ -536,7 +564,7 @@ Aplicación web funcional instalable como PWA, catálogo de 500 productos, gesti
 
 ## 11.3 Mejoras futuras
 
-Detalladas en [ROADMAP](docs/ROADMAP.md). Lo más relevante: completar la app Android (BiometricPrompt, Room offline, escáner de barras con CameraX), Swagger/OpenAPI, validación con Zod, accesibilidad WCAG AA, workflow CI/CD formal en GitHub Actions, subida de imágenes de producto, notificaciones push, recuperación de contraseña por email.
+Detalladas en [ROADMAP](docs/ROADMAP.md). Lo más relevante: mejoras sobre la app Android existente (BiometricPrompt para desbloquear sesión guardada, Room + cola offline para operar sin red, escáner de código de barras con CameraX + ML Kit), Swagger/OpenAPI, validación con Zod, accesibilidad WCAG AA completa, workflow CI/CD formal en GitHub Actions, subida de imágenes de producto, notificaciones push (FCM), recuperación de contraseña por email y multi-almacén.
 
 ## 11.4 Valoración personal
 
@@ -593,9 +621,9 @@ SW que limpia las cachés del SW antiguo (`stockly-v1`, que cacheaba `app.js` co
 
 ![frontend/sw.js (Service Worker de autodesregistro)](screenshots/05-service-worker.png)
 
-### D.3 Capa de red Android (Kotlin, en desarrollo)
+### D.3 Capa de red Android (Kotlin)
 
-`StocklyApi.kt` en `mobile-android/app/src/main/java/com/stockly/app/network/`: interfaz Retrofit con los endpoints + factory `StocklyApiFactory.build()` que monta el `OkHttpClient` con `AuthInterceptor` que inyecta el JWT.
+`StocklyApi.kt` en `mobile-android/app/src/main/java/com/stockly/app/network/`: interfaz Retrofit con los endpoints + factory `StocklyApiFactory.build()` que monta el `OkHttpClient` con `AuthInterceptor` que inyecta el JWT desde `TokenStore`.
 
 ![StocklyApi.kt (Retrofit + OkHttp con AuthInterceptor)](screenshots/06-kotlin-retrofit.png)
 

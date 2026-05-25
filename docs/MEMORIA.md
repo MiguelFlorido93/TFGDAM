@@ -155,7 +155,7 @@ Navegador (PWA)      Android nativo (Kotlin)
 
 Entidades: **usuarios**, **categorias**, **productos**, **reservas**, **movimientos**.
 
-Relaciones: `productos.categoria_id → categorias.id` (1\:N, ON DELETE SET NULL), `reservas.usuario_id → usuarios.id` y `reservas.producto_id → productos.id` (N\:1), `movimientos.producto_id → productos.id` (N\:1, ON DELETE CASCADE) y `movimientos.reserva_id → reservas.id` (N\:1 opcional). Diagrama E/R en `docs/diagrams/er.drawio` *(pendiente)*.
+Relaciones: `productos.categoria_id → categorias.id` (1\:N, ON DELETE SET NULL), `reservas.usuario_id → usuarios.id` y `reservas.producto_id → productos.id` (N\:1), `movimientos.producto_id → productos.id` (N\:1, ON DELETE CASCADE) y `movimientos.usuario_id → usuarios.id` (N\:1 opcional). Diagrama E/R disponible en `docs/diagrams/er.drawio`; exportar como PNG/SVG desde draw.io para incluir en el documento final.
 
 ## 3.2 Diseño lógico
 
@@ -350,18 +350,23 @@ App *single-activity* con **Navigation Compose**. Cuatro destinos implementados:
 - `PATCH /api/reservas/:id/estado` — confirmar / entregar.
 - `POST /api/reservas/:id/incidencias` — crear incidencia.
 
-## 6.4 Persistencia local y sesiones
+## 6.4 Persistencia local
 
-**`TokenStore`** usa `EncryptedSharedPreferences` con `MasterKey.AES256_GCM` para cifrar el JWT y los datos del usuario (`Usuario` serializado). Al abrir la app, si `tokenStore.isLoggedIn` es `true`, se arranca directamente en la lista de reservas.
+**`TokenStore`** (`data/TokenStore.kt`) usa `EncryptedSharedPreferences` con `MasterKey.AES256_GCM` para cifrar en reposo el JWT y los datos del usuario (`Usuario` serializado como JSON). La clave maestra se genera y almacena en Android Keystore, vinculada al dispositivo. El token nunca se escribe en texto plano en el almacenamiento.
 
-## 6.5 Funcionalidades pendientes
+## 6.5 Gestión de sesiones
+
+Al arrancar la app, `MainActivity` consulta `tokenStore.isLoggedIn`: si es `true`, el `NavHost` inicia directamente en `ListaReservasScreen` saltándose la pantalla de login. Al pulsar "Cerrar sesión", `TokenStore.clear()` elimina JWT y datos de usuario, y el `NavController` navega de vuelta a `LoginScreen` limpiando el backstack completo. Los errores HTTP 401 desde Retrofit no se capturan automáticamente — mejora pendiente mediante un `Authenticator` de OkHttp.
+
+## 6.6 Funcionalidades pendientes
 
 Lo implementado cubre el flujo principal del operario. Quedan como mejoras futuras:
 - `BiometricPrompt` antes de exponer la sesión guardada.
 - **Room** + cola offline para confirmaciones e incidencias sin red.
 - Escáner de código de barras con CameraX + ML Kit.
+- `Authenticator` OkHttp para renovar o limpiar sesión ante 401 automáticamente.
 
-## 6.6 Capturas
+## 6.7 Capturas
 
 > Pendientes de añadir.
 

@@ -32,17 +32,103 @@ API REST · Node.js · Express · MySQL · JWT · PWA · Service Worker · Kotli
 
 ## Índice
 
-<!-- TOC_PLACEHOLDER -->
+> *En el documento Word final, sustituir este índice por el generado automáticamente con: Referencias → Tabla de contenido → Tabla automática.*
+
+| Sección | |
+|---------|--|
+| Resumen | |
+| Abstract | |
+| Palabras clave | |
+| **1. Introducción** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;1.1 Contexto del proyecto | |
+| &nbsp;&nbsp;&nbsp;&nbsp;1.2 Objetivos del proyecto | |
+| &nbsp;&nbsp;&nbsp;&nbsp;1.3 Motivación | |
+| &nbsp;&nbsp;&nbsp;&nbsp;1.4 Tecnologías utilizadas | |
+| **2. Análisis y diseño del sistema** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.1 Descripción general del proyecto | |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.2 Roles de usuario | |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.3 Requisitos funcionales | |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.4 Requisitos no funcionales | |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.5 Casos de uso | |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.6 Diseño de interfaces (Figma) | |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.7 Arquitectura general del sistema | |
+| **3. Diseño de la base de datos** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;3.1 Modelo entidad-relación | |
+| &nbsp;&nbsp;&nbsp;&nbsp;3.2 Diseño lógico de tablas | |
+| &nbsp;&nbsp;&nbsp;&nbsp;3.3 Relaciones y claves | |
+| &nbsp;&nbsp;&nbsp;&nbsp;3.4 Scripts SQL | |
+| &nbsp;&nbsp;&nbsp;&nbsp;3.5 Datos de prueba (seed) | |
+| **4. Desarrollo del backend** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.1 Arquitectura del backend | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.2 Configuración inicial del proyecto | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.3 Conexión a la base de datos | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.4 Desarrollo de la API REST | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.5 CRUD de entidades | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.6 Validaciones de datos | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.7 Manejo global de errores | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.8 Autenticación y autorización | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.9 Swagger / OpenAPI | |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.10 Pruebas de endpoints | |
+| **5. Desarrollo de la aplicación web** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.1 Diseño inicial en Figma | |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.2 Estructura del frontend | |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.3 Integración con la API REST | |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.4 Gestión de sesiones y login | |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.5 CRUD de datos | |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.6 Funcionalidades según rol | |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.7 Manejo de errores | |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.8 Capturas de la aplicación | |
+| **6. Desarrollo de la aplicación móvil** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.1 Diseño inicial en Figma | |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.2 Navegación entre pantallas | |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.3 Conexión con la API REST | |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.4 Persistencia local | |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.5 Gestión de sesiones | |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.6 Funcionalidades futuras | |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.7 Capturas de la aplicación | |
+| **7. Despliegue e infraestructura** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;7.1 Variables de entorno | |
+| &nbsp;&nbsp;&nbsp;&nbsp;7.2 Despliegue del backend | |
+| &nbsp;&nbsp;&nbsp;&nbsp;7.3 Base de datos remota | |
+| &nbsp;&nbsp;&nbsp;&nbsp;7.4 Hosting y servicios cloud | |
+| &nbsp;&nbsp;&nbsp;&nbsp;7.5 Git y GitHub | |
+| &nbsp;&nbsp;&nbsp;&nbsp;7.6 GitHub Actions / CI/CD | |
+| &nbsp;&nbsp;&nbsp;&nbsp;7.7 Acceso público al sistema | |
+| **8. Seguridad** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;8.1 Autenticación | |
+| &nbsp;&nbsp;&nbsp;&nbsp;8.2 Autorización | |
+| &nbsp;&nbsp;&nbsp;&nbsp;8.3 Protección de datos | |
+| &nbsp;&nbsp;&nbsp;&nbsp;8.4 Buenas prácticas aplicadas | |
+| **9. Inteligencia Artificial aplicada al proyecto** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;9.1 Herramientas utilizadas | |
+| &nbsp;&nbsp;&nbsp;&nbsp;9.2 Uso realizado | |
+| &nbsp;&nbsp;&nbsp;&nbsp;9.3 Validación y revisión | |
+| **10. Pruebas y validación** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;10.1 Pruebas funcionales | |
+| &nbsp;&nbsp;&nbsp;&nbsp;10.2 Casos de prueba | |
+| &nbsp;&nbsp;&nbsp;&nbsp;10.3 Resultados obtenidos | |
+| &nbsp;&nbsp;&nbsp;&nbsp;10.4 Errores encontrados y soluciones | |
+| **11. Conclusiones** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;11.1 Resultados obtenidos | |
+| &nbsp;&nbsp;&nbsp;&nbsp;11.2 Problemas encontrados | |
+| &nbsp;&nbsp;&nbsp;&nbsp;11.3 Mejoras futuras | |
+| &nbsp;&nbsp;&nbsp;&nbsp;11.4 Valoración personal | |
+| **12. Bibliografía** | |
+| **13. Anexos** | |
+| &nbsp;&nbsp;&nbsp;&nbsp;Anexo A. Manual de instalación | |
+| &nbsp;&nbsp;&nbsp;&nbsp;Anexo B. Manual de usuario | |
+| &nbsp;&nbsp;&nbsp;&nbsp;Anexo C. Enlaces | |
+| &nbsp;&nbsp;&nbsp;&nbsp;Anexo D. Fragmentos de código relevantes | |
 
 ---
 
 # 1. Introducción
 
-## 1.1 Contexto
+## 1.1 Contexto del proyecto
 
 En muchas pymes —tiendas, talleres, almacenes de distribución— el inventario se gestiona con hojas de cálculo compartidas o anotaciones en papel. Cuando varias personas trabajan a la vez sobre el mismo stock aparecen ventas duplicadas, reservas olvidadas y movimientos sin trazabilidad. Stockly se diseña como un sistema ligero pero serio: web instalable, API propia y control de concurrencia real.
 
-## 1.2 Objetivos
+## 1.2 Objetivos del proyecto
 
 **General:** desarrollar una aplicación web (con extensión móvil nativa) para gestionar inventario y reservas de un almacén, con autenticación por roles, control de concurrencia y trazabilidad de movimientos, desplegable en cloud y accesible públicamente.
 
@@ -52,7 +138,7 @@ En muchas pymes —tiendas, talleres, almacenes de distribución— el inventari
 
 Aplicar de forma cohesionada los contenidos del ciclo: modelado de datos, API REST, autenticación, frontend, control de concurrencia, PWA, despliegue, pruebas y Android nativo. El acoplamiento entre módulos es lo que pone a prueba lo aprendido.
 
-## 1.4 Tecnologías
+## 1.4 Tecnologías utilizadas
 
 - **Backend:** Node.js 24 LTS, Express 4, mysql2, bcryptjs, jsonwebtoken, helmet, cors, compression, morgan, express-rate-limit.
 - **Frontend:** JavaScript ES2020 vanilla (sin framework), CSS3 con tokens y modo claro/oscuro, Service Worker, Web App Manifest.
@@ -65,7 +151,7 @@ Aplicar de forma cohesionada los contenidos del ciclo: modelado de datos, API RE
 
 # 2. Análisis y diseño del sistema
 
-## 2.1 Descripción general
+## 2.1 Descripción general del proyecto
 
 Stockly consta de tres componentes: (1) **backend** Node/Express con API REST `/api/auth`, `/api/productos`, `/api/categorias`, `/api/reservas`, `/api/admin`; (2) **frontend PWA** servido por el propio backend, con modo offline básico; (3) **app móvil Android nativa** (Kotlin + Jetpack Compose) específica para el operario. El sistema gestiona catálogo, reservas con estado (pendiente / confirmada / cancelada / entregada), auditoría automática de movimientos, dashboard con KPIs, importación CSV y albarán imprimible.
 
@@ -126,7 +212,7 @@ Tres iteraciones del sistema de diseño: (1) **v1** dashboard SaaS genérico con
 
 Pantallas: Login/Registro, Catálogo (cards), Detalle de producto, Mis reservas (cliente), Cola de reservas (operario), Dashboard (admin), Inventario (admin), modales de CRUD. Bocetos y mockups en `docs/figma/` *(pendiente de exportar)*.
 
-## 2.7 Arquitectura general
+## 2.7 Arquitectura general del sistema
 
 Cliente web (PWA) y app Android consumen la misma API REST sobre HTTPS, autenticándose con JWT en cabecera `Authorization`. El backend Express es *stateless* y conecta con MySQL mediante el driver `mysql2` con *prepared statements*. El sistema está desplegado en **Railway** con TLS gestionado automáticamente y deploy continuo desde GitHub.
 
@@ -157,7 +243,7 @@ Entidades: **usuarios**, **categorias**, **productos**, **reservas**, **movimien
 
 Relaciones: `productos.categoria_id → categorias.id` (1\:N, ON DELETE SET NULL), `reservas.usuario_id → usuarios.id` y `reservas.producto_id → productos.id` (N\:1), `movimientos.producto_id → productos.id` (N\:1, ON DELETE CASCADE) y `movimientos.usuario_id → usuarios.id` (N\:1 opcional). Diagrama E/R disponible en `docs/diagrams/er.drawio`; exportar como PNG/SVG desde draw.io para incluir en el documento final.
 
-## 3.2 Diseño lógico
+## 3.2 Diseño lógico de tablas
 
 - Charset `utf8mb4`, collation `utf8mb4_unicode_ci`.
 - PK `INT UNSIGNED AUTO_INCREMENT`. Timestamps `DATETIME DEFAULT CURRENT_TIMESTAMP` con `ON UPDATE` donde procede.
@@ -180,7 +266,7 @@ Esquema completo y semillas en [`db/schema.sql`](db/schema.sql). El script se ap
 
 # 4. Desarrollo del backend
 
-## 4.1 Arquitectura
+## 4.1 Arquitectura del backend
 
 `backend/server.js` arranca Express con middlewares globales (helmet, cors, compression, morgan, rate-limit) y monta los routers. Estructura:
 
@@ -196,7 +282,7 @@ backend/
 
 Cada ruta es un router Express que importa el pool y el middleware. La lógica vive en el handler porque el dominio es pequeño y abstracciones extra serían ceremonia.
 
-## 4.2 Configuración inicial
+## 4.2 Configuración inicial del proyecto
 
 `backend/package.json` declara dependencias y scripts (`npm start`, `npm test`, `npm run lint`). Variables de entorno en `backend/.env`, generado desde `backend/.env.example`:
 
@@ -213,11 +299,11 @@ JWT_EXPIRES_IN=8h
 NODE_ENV=development
 ```
 
-## 4.3 Conexión a la BD
+## 4.3 Conexión a la base de datos
 
 `src/db.js` crea un pool `mysql2/promise` con `connectionLimit: 10`. Todas las consultas usan *prepared statements* (`pool.execute(sql, [params])`) para prevenir SQL injection.
 
-## 4.4 API REST — rutas principales
+## 4.4 Desarrollo de la API REST
 
 | Método | Ruta                          | Auth      |
 |--------|-------------------------------|-----------|
@@ -233,11 +319,11 @@ NODE_ENV=development
 | GET    | /api/admin/stats              | admin     |
 | POST   | /api/admin/usuarios           | admin     |
 
-## 4.5 CRUD
+## 4.5 CRUD de entidades
 
 Cada entidad sigue GET (lista/detalle), POST (crear), PUT/PATCH (editar), DELETE (eliminar). Los handlers de Express consultan directamente la capa `db/` mediante `mysql2/promise` con consultas parametrizadas.
 
-## 4.6 Validaciones
+## 4.6 Validaciones de datos
 
 Validación manual en cada handler (`if (!body.nombre) return res.status(400)…`). Se validan campos requeridos, tipos y rangos antes de ejecutar la consulta; el error retorna con código 400 y mensaje descriptivo. Migración a Zod para esquemas centralizados está planificada como mejora futura.
 
@@ -299,7 +385,7 @@ frontend/
 
 Vistas: `login`, `catalogo`, `mis-reservas`, `cola`, `dashboard`, `inventario`, `usuarios`, `importar`. El router cambia de vista con `.view.active { display: block }`.
 
-## 5.3 Integración con la API
+## 5.3 Integración con la API REST
 
 Wrapper `api(path, opts)` en `frontend/app.js` (líneas 59-72): inyecta `Authorization: Bearer <token>`, maneja 401 con logout automático y serializa la respuesta:
 
@@ -321,7 +407,7 @@ async function api(path, opts = {}) {
 }
 ```
 
-## 5.4 Sesiones y login
+## 5.4 Gestión de sesiones y login
 
 Token en `localStorage`. En arranque, si existe, se valida con `GET /api/auth/me`; si falla, se borra y se muestra login. Logout = borrar token + redirigir.
 
@@ -329,7 +415,7 @@ Token en `localStorage`. En arranque, si existe, se valida con `GET /api/auth/me
 
 Cada vista de administración: tabla con acciones inline (editar, eliminar) + FAB para crear. Mismo modal para crear y editar (pre-rellenado si edita).
 
-## 5.6 Funcionalidades por rol
+## 5.6 Funcionalidades según rol
 
 El JWT incluye el rol; el frontend lo lee al arrancar y oculta elementos no permitidos. La autorización **real** vive en el backend.
 
@@ -396,7 +482,7 @@ App *single-activity* con **Navigation Compose**. Cuatro destinos implementados:
 3. **DetalleReservaScreen** — datos completos del pedido: cliente, SKU, cantidad, ubicación, precio/unidad, historial (`confirmada_por`, `entregada_por`), lista de incidencias. Botones contextuales **Confirmar** (si `pendiente`) y **Entregar** (si `confirmada`). Acceso al formulario de incidencia.
 4. **IncidenciaFormScreen** — tipo (rotura / faltante / mal estado / otro) + descripción libre. Al guardar, la incidencia queda adjunta a la reserva con el operario identificado por el JWT.
 
-## 6.3 Conexión con la API
+## 6.3 Conexión con la API REST
 
 **Retrofit 2** + **OkHttp** con `AuthInterceptor` que inyecta `Authorization: Bearer <token>` en cada petición. Serialización con **kotlinx.serialization**. `BASE_URL` por *build variant* (debug → `http://10.0.2.2:3001`, release → `https://tfgdam-production.up.railway.app`). Endpoints consumidos:
 
@@ -414,7 +500,7 @@ App *single-activity* con **Navigation Compose**. Cuatro destinos implementados:
 
 Al arrancar la app, `MainActivity` consulta `tokenStore.isLoggedIn`: si es `true`, el `NavHost` inicia directamente en `ListaReservasScreen` saltándose la pantalla de login. Al pulsar "Cerrar sesión", `TokenStore.clear()` elimina JWT y datos de usuario, y el `NavController` navega de vuelta a `LoginScreen` limpiando el backstack completo. Los errores HTTP 401 desde Retrofit no se capturan automáticamente — mejora pendiente mediante un `Authenticator` de OkHttp.
 
-## 6.6 Funcionalidades pendientes
+## 6.6 Funcionalidades futuras
 
 Lo implementado cubre el flujo principal del operario. Quedan como mejoras futuras:
 - `BiometricPrompt` antes de exponer la sesión guardada.
@@ -422,7 +508,7 @@ Lo implementado cubre el flujo principal del operario. Quedan como mejoras futur
 - Escáner de código de barras con CameraX + ML Kit.
 - `Authenticator` OkHttp para renovar o limpiar sesión ante 401 automáticamente.
 
-## 6.7 Capturas
+## 6.7 Capturas de la aplicación
 
 Pantallas clave a documentar con captura del dispositivo:
 
@@ -465,11 +551,11 @@ Railway detecta `nixpacks.toml` en la raíz del repositorio y ejecuta automátic
 
 `railway.json` define el healthcheck (`GET /api/health`), la política de reinicio en fallo y el número máximo de reintentos (5). El backend escucha en `0.0.0.0:$PORT` con `trust proxy` activo para que Express reciba la IP real detrás del proxy de Railway.
 
-## 7.3 Base de datos
+## 7.3 Base de datos remota
 
 Railway gestiona una instancia **MySQL 8** como servicio independiente dentro del mismo proyecto. La conexión se inyecta como `MYSQL_URL` (formato `mysql://user:pass@host:port/db`). Al primer arranque, `backend/src/ensure-schema.js` detecta que la tabla `usuarios` no existe y aplica `db/schema.sql` completo, incluyendo semillas de prueba. Los redespliegues no tocan los datos porque el schema solo se aplica si las tablas están vacías.
 
-## 7.4 Servicios cloud y hosting
+## 7.4 Hosting y servicios cloud
 
 | Componente    | Servicio                  | Notas                                      |
 |---------------|---------------------------|--------------------------------------------|
@@ -478,11 +564,11 @@ Railway gestiona una instancia **MySQL 8** como servicio independiente dentro de
 | Frontend PWA  | Servido por el propio backend | Mismo origen → sin problemas de CORS.  |
 | TLS/HTTPS     | Gestionado por Railway    | Certificado automático en el subdominio.   |
 
-## 7.5 Control de versiones
+## 7.5 Git y GitHub
 
 Repositorio en GitHub (`husslesnake/tfgdam`). Estrategia *trunk-based*: commits directos a `main` con convenciones `feat:`, `fix:`, `docs:`, `chore:`. Cada push a `main` dispara automáticamente un nuevo deploy en Railway.
 
-## 7.6 CI/CD
+## 7.6 GitHub Actions / CI/CD
 
 El pipeline de despliegue continuo está activo: Railway escucha el webhook de GitHub y redespliega en cada push a `main`. Las comprobaciones de calidad (lint ESLint + tests Vitest) se ejecutan localmente antes de hacer push; la integración de un workflow formal en `.github/workflows/ci.yml` queda como mejora futura.
 
@@ -570,7 +656,7 @@ Pruebas manuales: instalación PWA en Chrome desktop y Android; comportamiento o
 | TC-09 | Token expirado                                        | 401                                                  | ✅      |
 | TC-10 | Rate limit /api/auth                                  | 429 tras 30 intentos                                 | ✅      |
 
-## 10.3 Resultados
+## 10.3 Resultados obtenidos
 
 Todos los tests pasan. Los flujos críticos han sido verificados tanto en local como en el entorno de producción Railway (`https://tfgdam-production.up.railway.app`).
 
@@ -588,7 +674,7 @@ Histórico completo en [`docs/BITACORA.md`](docs/BITACORA.md).
 
 # 11. Conclusiones
 
-## 11.1 Resultados
+## 11.1 Resultados obtenidos
 
 Aplicación web funcional instalable como PWA, catálogo de 500 productos, gestión completa de reservas con concurrencia, dashboard, sistema de diseño propio iterado en tres versiones, tests automatizados sobre flujos críticos, instaladores Windows para uso sin conocimientos previos, **app Android nativa funcional** (login, lista de reservas, detalle, formulario de incidencias, sesión cifrada con EncryptedSharedPreferences) y **despliegue en producción** accesible públicamente en Railway.
 

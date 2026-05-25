@@ -18,11 +18,11 @@
 
 ## Resumen
 
-Stockly es una aplicación web (PWA) para gestionar inventario y reservas en un almacén pequeño-mediano. Resuelve un problema concreto: en muchas pymes la trazabilidad de stock sigue en hojas de cálculo, las reservas se anotan sin control de concurrencia y los movimientos no quedan auditados. Stockly centraliza catálogo, stock, reservas y movimientos con tres roles (cliente, operario, admin), API REST con JWT, control de concurrencia a nivel de BD e interfaz responsive instalable como PWA. **Tecnologías:** Node.js + Express, MySQL 8, JavaScript vanilla, Service Worker, JWT, bcrypt, Vitest, Kotlin + Jetpack Compose (app móvil, fase final). **Resultado:** sistema operativo con catálogo de 500 productos, gestión de reservas concurrentes, dashboard con KPIs, exportación CSV, modo oscuro e instalador Windows. Tests automatizados sobre los flujos críticos. Pendiente: despliegue cloud y app móvil nativa.
+Stockly es una aplicación web (PWA) para gestionar inventario y reservas en un almacén pequeño-mediano. Resuelve un problema concreto: en muchas pymes la trazabilidad de stock sigue en hojas de cálculo, las reservas se anotan sin control de concurrencia y los movimientos no quedan auditados. Stockly centraliza catálogo, stock, reservas y movimientos con tres roles (cliente, operario, admin), API REST con JWT, control de concurrencia a nivel de BD e interfaz responsive instalable como PWA. **Tecnologías:** Node.js + Express, MySQL 8, JavaScript vanilla, Service Worker, JWT, bcrypt, Vitest, Kotlin + Jetpack Compose (app móvil Android), Railway (cloud). **Resultado:** sistema operativo con catálogo de 500 productos, gestión de reservas concurrentes, dashboard con KPIs, exportación CSV, modo oscuro, instalador Windows, app Android nativa funcional para el operario y despliegue en producción accesible públicamente.
 
 ## Abstract
 
-Stockly is a PWA for inventory and reservation management in small to medium warehouses. It addresses a real problem: stock traceability is still handled on spreadsheets in many SMBs, reservations are taken without concurrency control, and movements are not audited. Stockly centralizes catalog, stock, reservations and movements with three roles (client, operator, admin), a REST API with JWT, database-level concurrency control and a responsive UI installable as a PWA. **Stack:** Node.js + Express, MySQL 8, vanilla JavaScript frontend, Service Worker, JWT, bcrypt, Vitest, Kotlin + Jetpack Compose (mobile, final phase). **Outcome:** operational system with 500-product catalog, concurrent reservations, KPI dashboard, CSV export, dark mode and Windows installer. Automated tests on critical flows. Pending: cloud deployment and native mobile app.
+Stockly is a PWA for inventory and reservation management in small to medium warehouses. It addresses a real problem: stock traceability is still handled on spreadsheets in many SMBs, reservations are taken without concurrency control, and movements are not audited. Stockly centralizes catalog, stock, reservations and movements with three roles (client, operator, admin), a REST API with JWT, database-level concurrency control and a responsive UI installable as a PWA. **Stack:** Node.js + Express, MySQL 8, vanilla JavaScript frontend, Service Worker, JWT, bcrypt, Vitest, Kotlin + Jetpack Compose (Android), Railway (cloud). **Outcome:** operational system with 500-product catalog, concurrent reservations, KPI dashboard, CSV export, dark mode, Windows installer, functional native Android app for warehouse operators, and a live public deployment on Railway.
 
 ## Palabras clave
 
@@ -57,7 +57,7 @@ Aplicar de forma cohesionada los contenidos del ciclo: modelado de datos, API RE
 - **Backend:** Node.js 24 LTS, Express 4, mysql2, bcryptjs, jsonwebtoken, helmet, cors, compression, morgan, express-rate-limit.
 - **Frontend:** JavaScript ES2020 vanilla (sin framework), CSS3 con tokens y modo claro/oscuro, Service Worker, Web App Manifest.
 - **Base de datos:** MySQL 8 (compatible MariaDB) con `utf8mb4_unicode_ci`.
-- **Cloud / DevOps (planificado):** Render / Fly.io / VPS, GitHub Actions, Let's Encrypt.
+- **Cloud / DevOps:** Railway (PaaS), Nixpacks, MySQL gestionado, HTTPS automático, deploy continuo vía webhook desde GitHub.
 - **Tooling:** Vitest, ESLint, Git + GitHub, Claude Code y GitHub Copilot como asistentes (cap. 9).
 - **App móvil (fase final):** Kotlin, Jetpack Compose, Retrofit + OkHttp, Room, CameraX + ML Kit Barcode, EncryptedSharedPreferences + BiometricPrompt.
 
@@ -128,7 +128,7 @@ Pantallas: Login/Registro, Catálogo (cards), Detalle de producto, Mis reservas 
 
 ## 2.7 Arquitectura general
 
-Cliente web (PWA) y app Android consumen la misma API REST sobre HTTPS, autenticándose con JWT en cabecera `Authorization`. El backend Express es *stateless* y conecta con MySQL mediante el driver `mysql2` con *prepared statements*. El servicio se desplegará en un proveedor cloud (Render / Fly.io / VPS) con TLS y dominio propio, con CI/CD desde GitHub Actions.
+Cliente web (PWA) y app Android consumen la misma API REST sobre HTTPS, autenticándose con JWT en cabecera `Authorization`. El backend Express es *stateless* y conecta con MySQL mediante el driver `mysql2` con *prepared statements*. El sistema está desplegado en **Railway** con TLS gestionado automáticamente y deploy continuo desde GitHub.
 
 ```
 Navegador (PWA)      Android nativo (Kotlin)
@@ -304,51 +304,66 @@ Errores de red o 4xx/5xx → toast con el mensaje del backend. 401 → logout. 4
 
 # 6. Desarrollo de la aplicación móvil
 
-> **Estado:** en desarrollo. Especificación funcional cerrada con el usuario; implementación pendiente (ROADMAP Fase 8).
+App Android nativa para el empleado de almacén: ver reservas activas, consultar el detalle del pedido, confirmar o entregar, y reportar incidencias. El sistema registra **quién confirma**, **quién entrega** y **quién reporta** para tener trazabilidad por empleado.
 
-La app está pensada para el empleado de almacén durante su turno: ver reservas pendientes y confirmadas, consultar el detalle del pedido (cliente y productos), confirmar el pedido, confirmar la entrega y, si surge un problema, rellenar un formulario de incidencia que queda adjunto a la reserva. El sistema registra **quién confirma**, **quién entrega** y **quién reporta cada incidencia** para tener trazabilidad por empleado.
+Estructura del módulo `mobile-android/`:
+
+```
+app/src/main/java/com/stockly/app/
+├── MainActivity.kt
+├── StocklyApp.kt
+├── data/
+│   ├── StocklyApi.kt          # interfaz Retrofit
+│   ├── AuthInterceptor.kt     # inyecta JWT en cada petición
+│   ├── TokenStore.kt          # persistencia cifrada
+│   └── ReservasRepository.kt  # capa de datos
+├── model/
+│   └── Models.kt              # data classes serializables
+└── ui/
+    ├── Navigation.kt          # NavHost con 4 destinos
+    ├── login/LoginScreen.kt
+    ├── lista/ListaReservasScreen.kt
+    ├── detalle/DetalleReservaScreen.kt
+    └── incidencia/IncidenciaFormScreen.kt
+```
 
 ## 6.1 Diseño inicial en Figma
 
-A definir en sesión específica. Esquema funcional acordado en §6.2.
+> Pendiente de exportar mockups de las pantallas Android.
 
 ## 6.2 Navegación entre pantallas
 
-App Android nativa en **Kotlin** + **Jetpack Compose**, *single-activity* con **Navigation Compose**. Pantallas:
+App *single-activity* con **Navigation Compose**. Cuatro destinos implementados:
 
-1. **Login** (email + contraseña → JWT). Si hay sesión guardada y biometría configurada, `BiometricPrompt`.
-2. **Lista de reservas** filtrable por estado (`pendientes`, `confirmadas`; ambos seleccionados por defecto). Cada fila muestra cliente, productos resumidos, fecha y estado.
-3. **Detalle de reserva**: datos del cliente, productos con cantidades y ubicación, historial (quién confirmó, quién entregó), incidencias previas. Botones contextuales:
-   - **Confirmar pedido** (solo si `pendiente`) → transición `pendiente → confirmada`, registra `confirmada_por_id`.
-   - **Confirmar entrega** (solo si `confirmada`) → transición `confirmada → entregada`, registra `entregada_por_id`.
-   - **Reportar incidencia** (siempre disponible en estados activos).
-4. **Formulario de incidencia**: tipo (rotura / faltante / mal estado / otro), descripción libre, foto opcional. Al guardar, se adjunta a la reserva y queda visible en su historial.
+1. **LoginScreen** — email + contraseña → JWT. Redirige a Lista si ya hay sesión válida.
+2. **ListaReservasScreen** — lista filtrable por estado (activas por defecto). Cada fila muestra cliente, producto, fecha y estado. Botón de logout.
+3. **DetalleReservaScreen** — datos completos del pedido: cliente, SKU, cantidad, ubicación, precio/unidad, historial (`confirmada_por`, `entregada_por`), lista de incidencias. Botones contextuales **Confirmar** (si `pendiente`) y **Entregar** (si `confirmada`). Acceso al formulario de incidencia.
+4. **IncidenciaFormScreen** — tipo (rotura / faltante / mal estado / otro) + descripción libre. Al guardar, la incidencia queda adjunta a la reserva con el operario identificado por el JWT.
 
 ## 6.3 Conexión con la API
 
-**Retrofit 2** + **OkHttp** con interceptor que añade `Authorization: Bearer <token>` y serialización con **kotlinx.serialization**. `BASE_URL` por *build variant* (debug → `http://10.0.2.2:3001`, release → URL pública HTTPS). Endpoints consumidos:
+**Retrofit 2** + **OkHttp** con `AuthInterceptor` que inyecta `Authorization: Bearer <token>` en cada petición. Serialización con **kotlinx.serialization**. `BASE_URL` por *build variant* (debug → `http://10.0.2.2:3001`, release → `https://tfgdam-production.up.railway.app`). Endpoints consumidos:
 
 - `POST /api/auth/login` — autenticación.
-- `GET /api/reservas?estado=pendiente,confirmada` — lista del operario.
-- `GET /api/reservas/:id` — detalle con productos, historial e incidencias.
-- `PATCH /api/reservas/:id/estado` (body: `{ accion: 'confirmar' | 'entregar' | 'cancelar' }`) — el backend registra el usuario que ejecuta la acción.
-- `POST /api/reservas/:id/incidencias` (multipart: tipo, descripción, foto opcional) — el operario queda registrado por el JWT.
+- `GET /api/reservas?activas=1` — lista del operario (pendientes + confirmadas).
+- `GET /api/reservas/:id` — detalle con historial e incidencias.
+- `PATCH /api/reservas/:id/estado` — confirmar / entregar.
+- `POST /api/reservas/:id/incidencias` — crear incidencia.
 
-## 6.4 Cambios necesarios en el backend
+## 6.4 Persistencia local y sesiones
 
-Tres ampliaciones (ROADMAP 8.9-8.11):
+**`TokenStore`** usa `EncryptedSharedPreferences` con `MasterKey.AES256_GCM` para cifrar el JWT y los datos del usuario (`Usuario` serializado). Al abrir la app, si `tokenStore.isLoggedIn` es `true`, se arranca directamente en la lista de reservas.
 
-1. **Columnas nuevas** en `reservas`: `confirmada_por_id` y `entregada_por_id` (FK a `usuarios`, nullables). El handler `PATCH /api/reservas/:id/estado` ya identifica al usuario por el JWT; basta con escribir esas columnas en la transición correspondiente.
-2. **Tabla `incidencias`** con `(id, reserva_id, operario_id, tipo, descripcion, foto_url, created_at)`, FK a reservas y usuarios.
-3. **Endpoint** `POST /api/reservas/:id/incidencias` (rol operario o admin) y serialización del historial + incidencias en `GET /api/reservas/:id`.
+## 6.5 Funcionalidades pendientes
 
-## 6.5 Persistencia local y sesiones
-
-**EncryptedSharedPreferences** para el JWT y los datos del usuario. **Room** para la cola offline de confirmaciones e incidencias cuando no hay red (sync al reconectar). Al abrir la app se valida el token con `GET /api/auth/me`; si falla, se pide login; si hay biometría configurada, `BiometricPrompt` antes de exponer la sesión.
+Lo implementado cubre el flujo principal del operario. Quedan como mejoras futuras:
+- `BiometricPrompt` antes de exponer la sesión guardada.
+- **Room** + cola offline para confirmaciones e incidencias sin red.
+- Escáner de código de barras con CameraX + ML Kit.
 
 ## 6.6 Capturas
 
-> Pendientes hasta completar el desarrollo.
+> Pendientes de añadir.
 
 ---
 
@@ -487,7 +502,7 @@ Pruebas manuales: instalación PWA en Chrome desktop y Android; comportamiento o
 
 ## 10.3 Resultados
 
-Todos los tests pasan; los flujos críticos funcionan en desarrollo. Pendiente verificar en entorno cloud tras el despliegue.
+Todos los tests pasan. Los flujos críticos han sido verificados tanto en local como en el entorno de producción Railway (`https://tfgdam-production.up.railway.app`).
 
 ## 10.4 Errores encontrados y soluciones
 
@@ -516,11 +531,11 @@ Aplicación web funcional instalable como PWA, catálogo de 500 productos, gesti
 
 ## 11.3 Mejoras futuras
 
-Detalladas en [ROADMAP](docs/ROADMAP.md). Lo más relevante: desplegar en cloud (4.0), app Android nativa Kotlin para el operario (Fase 8), Swagger/OpenAPI, validación con Zod, accesibilidad WCAG AA, CI/CD completo, subida de imágenes de producto, notificaciones push, recuperación de contraseña por email.
+Detalladas en [ROADMAP](docs/ROADMAP.md). Lo más relevante: completar la app Android (BiometricPrompt, Room offline, escáner de barras con CameraX), Swagger/OpenAPI, validación con Zod, accesibilidad WCAG AA, workflow CI/CD formal en GitHub Actions, subida de imágenes de producto, notificaciones push, recuperación de contraseña por email.
 
 ## 11.4 Valoración personal
 
-El proyecto ha cumplido su función didáctica: integrar lo aprendido en un único producto, exponer puntos débiles (concurrencia, despliegue real, accesibilidad) y obligar a tomar decisiones con consecuencias visibles. Lo más valioso ha sido el hábito de iterar. La IA como par de programación multiplica la velocidad pero exige más disciplina de revisión, no menos. Quedan dos retos abiertos —despliegue real y app Android nativa— que cierran el ciclo: del modelado de datos al operario usando la app desde su móvil en el almacén.
+El proyecto ha cumplido su función didáctica: integrar lo aprendido en un único producto, exponer puntos débiles (concurrencia, despliegue real, accesibilidad) y obligar a tomar decisiones con consecuencias visibles. Lo más valioso ha sido el hábito de iterar. La IA como par de programación multiplica la velocidad pero exige más disciplina de revisión, no menos. Los dos objetivos clave —despliegue en producción y app Android nativa para el operario— han quedado resueltos: el sistema corre en Railway y el operario puede gestionar reservas desde su móvil. Queda abierta la segunda capa de la app móvil (autenticación biométrica, modo offline, escáner).
 
 ---
 
@@ -530,7 +545,7 @@ El proyecto ha cumplido su función didáctica: integrar lo aprendido en un úni
 
 **Libros y artículos:** Martin Kleppmann, *Designing Data-Intensive Applications* (consultado para transacciones y concurrencia). Martin Fowler, *Refactoring* (2.ª ed.).
 
-**Recursos web:** Render docs, Fly.io docs, WCAG 2.1 Quick Reference (<https://www.w3.org/WAI/WCAG21/quickref/>), OWASP Top 10 (<https://owasp.org/Top10/>).
+**Recursos web:** Railway docs (<https://docs.railway.com>), WCAG 2.1 Quick Reference (<https://www.w3.org/WAI/WCAG21/quickref/>), OWASP Top 10 (<https://owasp.org/Top10/>).
 
 **Herramientas:** Git, GitHub, VS Code, MySQL Workbench, Figma, Postman, Vitest, ESLint, Claude Code, GitHub Copilot, Inno Setup.
 
@@ -554,10 +569,10 @@ Manual detallado con capturas paso a paso pendiente en `docs/manual-usuario.md`.
 
 ## Anexo C — Enlaces
 
-- **GitHub:** *[URL del repo, a completar al hacer público]*
-- **Aplicación desplegada:** *[URL pública — pendiente, ROADMAP 4.0]*
+- **GitHub:** https://github.com/husslesnake/TFGDAM
+- **Aplicación desplegada:** https://tfgdam-production.up.railway.app/
 - **Swagger / OpenAPI:** pendiente.
-- **Vídeo demostración:** *[URL — ROADMAP 4.7]*
+- **Vídeo demostración:** *[pendiente de grabar]*
 
 ## Anexo D — Fragmentos de código relevantes
 

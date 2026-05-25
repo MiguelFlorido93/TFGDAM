@@ -9,10 +9,10 @@
 - **Título:** Stockly — Sistema de gestión de inventario y reservas para almacén
 - **Alumnos:** Adrián Bravo Santos y Miguel Ángel Florido
 - **Ciclo formativo:** Desarrollo de Aplicaciones Multiplataforma (DAM)
-- **Centro educativo:** *[a completar]*
+- **Centro educativo:** CDM Formación Alcorcón
 - **Curso académico:** 2025/2026
-- **Tutor/a:** *[a completar]*
-- **Fecha de entrega:** *[a completar]*
+- **Tutor/a:** Damián Sualdea Soy
+- **Fecha de entrega:** 26/05/2026
 
 ---
 

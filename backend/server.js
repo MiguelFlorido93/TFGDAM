@@ -55,6 +55,9 @@ if (process.env.NODE_ENV !== 'test') {
 // ---------- Frontend estático ----------
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
+// ---------- Descargas (APK Android, etc.) ----------
+app.use('/downloads', express.static(path.join(__dirname, '..', 'downloads')));
+
 // ---------- Rutas ----------
 app.get('/api/health', async (_req, res) => {
     try {

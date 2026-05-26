@@ -1,0 +1,175 @@
+<mxfile host="draw.io" version="21.0.0">
+
+  <!-- ===================================================
+       PÁGINA 1: Arquitectura lógica por capas
+       =================================================== -->
+  <diagram id="arch" name="Arquitectura General">
+    <mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ── FONDOS DE CAPA ── -->
+        <mxCell id="bg_client" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fff0;strokeColor=#82b366;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="760" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="lbl_client" value="CAPA CLIENTE" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=11;fontColor=#4a7c3f;" vertex="1" parent="1">
+          <mxGeometry x="30" y="24" width="160" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="bg_api" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f8ff;strokeColor=#6c8ebf;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="20" y="220" width="760" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="lbl_api" value="CAPA BACKEND" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=11;fontColor=#3a6ea8;" vertex="1" parent="1">
+          <mxGeometry x="30" y="224" width="160" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="bg_db" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffaf0;strokeColor=#d6b656;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="20" y="460" width="760" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="lbl_db" value="CAPA DE DATOS" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=11;fontColor=#a07000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="464" width="160" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- ── CAPA CLIENTE ── -->
+        <mxCell id="pwa" value="&lt;b&gt;Navegador Web (PWA)&lt;/b&gt;&lt;br/&gt;JavaScript ES2020 · Service Worker&lt;br/&gt;Web App Manifest · modo offline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="55" width="240" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="android" value="&lt;b&gt;App Android Nativa&lt;/b&gt;&lt;br/&gt;Kotlin · Jetpack Compose&lt;br/&gt;Retrofit + OkHttp · EncryptedSharedPrefs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="380" y="55" width="240" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- ── CAPA BACKEND ── -->
+        <mxCell id="backend" value="&lt;b&gt;Node.js 24 + Express 4&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="60" y="250" width="700" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mw" value="&lt;b&gt;Middlewares&lt;/b&gt;&lt;br/&gt;helmet · cors&lt;br/&gt;compression · morgan&lt;br/&gt;express-rate-limit&lt;br/&gt;authRequired · requireRole" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="285" width="160" height="95" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="routes" value="&lt;b&gt;Rutas API REST&lt;/b&gt;&lt;br/&gt;POST /api/auth/login · register&lt;br/&gt;GET/POST/PUT/DELETE /api/productos&lt;br/&gt;GET/PATCH/DELETE /api/reservas&lt;br/&gt;GET /api/admin/stats · usuarios" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="270" y="285" width="240" height="95" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="security_box" value="&lt;b&gt;Seguridad&lt;/b&gt;&lt;br/&gt;JWT HS256 · bcrypt cost 10&lt;br/&gt;SELECT FOR UPDATE (concurr.)&lt;br/&gt;Prepared statements&lt;br/&gt;HTTPS en producción" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="540" y="285" width="200" height="95" as="geometry"/>
+        </mxCell>
+
+        <!-- ── CAPA DE DATOS ── -->
+        <mxCell id="mysql_cyl" value="&lt;b&gt;MySQL 8&lt;/b&gt;&lt;br/&gt;utf8mb4_unicode_ci&lt;br/&gt;pool(10)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="490" width="100" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="t_usuarios"    value="usuarios"    style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="200" y="510" width="100" height="35" as="geometry"/></mxCell>
+        <mxCell id="t_categorias"  value="categorias"  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="315" y="510" width="100" height="35" as="geometry"/></mxCell>
+        <mxCell id="t_productos"   value="productos"   style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="430" y="510" width="100" height="35" as="geometry"/></mxCell>
+        <mxCell id="t_reservas"    value="reservas"    style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="545" y="510" width="100" height="35" as="geometry"/></mxCell>
+        <mxCell id="t_movimientos" value="movimientos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="660" y="510" width="100" height="35" as="geometry"/></mxCell>
+
+        <!-- FK entre tablas -->
+        <mxCell id="fk_prod_cat" value="N:1" style="endArrow=open;endFill=0;html=1;fontSize=9;strokeColor=#d6b656;" edge="1" source="t_productos" target="t_categorias" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="fk_res_usr"  value="N:1" style="endArrow=open;endFill=0;html=1;fontSize=9;strokeColor=#d6b656;" edge="1" source="t_reservas"  target="t_usuarios"   parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="595" y="580"/><mxPoint x="250" y="580"/></Array></mxGeometry></mxCell>
+        <mxCell id="fk_res_prod" value="N:1" style="endArrow=open;endFill=0;html=1;fontSize=9;strokeColor=#d6b656;" edge="1" source="t_reservas"  target="t_productos"  parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="fk_mov_res"  value="N:1" style="endArrow=open;endFill=0;html=1;fontSize=9;strokeColor=#d6b656;" edge="1" source="t_movimientos" target="t_reservas" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- ── FLECHAS ENTRE CAPAS ── -->
+        <mxCell id="arr_pwa_api" value="HTTPS · JWT" style="endArrow=block;endFill=1;startArrow=block;startFill=0;html=1;strokeColor=#4a7c3f;fontColor=#4a7c3f;fontStyle=1;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" edge="1" source="pwa" target="backend" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_and_api" value="HTTPS · JWT" style="endArrow=block;endFill=1;startArrow=block;startFill=0;html=1;strokeColor=#4a7c3f;fontColor=#4a7c3f;fontStyle=1;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" edge="1" source="android" target="backend" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr_api_db" value="mysql2/promise · pool(10)" style="endArrow=block;endFill=1;startArrow=none;html=1;strokeColor=#a07000;fontColor=#a07000;fontStyle=1;fontSize=11;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="backend" target="mysql_cyl" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ===================================================
+       PÁGINA 2: Diagrama de Despliegue
+       =================================================== -->
+  <diagram id="deploy" name="Despliegue (Railway)">
+    <mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ── NUBE RAILWAY ── -->
+        <mxCell id="railway_cloud" value="☁  Railway (Cloud)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede7f6;strokeColor=#7e57c2;fontSize=15;fontStyle=1;verticalAlign=top;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="280" y="30" width="680" height="500" as="geometry"/>
+        </mxCell>
+
+        <!-- Backend service -->
+        <mxCell id="deploy_backend" value="&lt;b&gt;Servicio: Backend&lt;/b&gt;&lt;br/&gt;Node.js 24 · Express 4&lt;br/&gt;Nixpacks (npm ci --omit=dev)&lt;br/&gt;node server.js&lt;br/&gt;trust proxy · 0.0.0.0:$PORT&lt;br/&gt;restart: ON_FAILURE (max 5)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="310" y="100" width="280" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- MySQL service -->
+        <mxCell id="deploy_mysql" value="&lt;b&gt;Plugin: MySQL 8&lt;/b&gt;&lt;br/&gt;Servicio gestionado&lt;br/&gt;MYSQL_URL inyectada&lt;br/&gt;Backups diarios&lt;br/&gt;Persistencia entre deploys" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="680" y="100" width="180" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- Env vars -->
+        <mxCell id="env_vars" value="&lt;b&gt;Variables de entorno&lt;/b&gt;&lt;br/&gt;NODE_ENV=production&lt;br/&gt;JWT_SECRET (≥256 bits)&lt;br/&gt;JWT_EXPIRES_IN=8h&lt;br/&gt;CORS_ORIGIN&lt;br/&gt;MYSQL_URL (referencia plugin)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#9c27b0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="310" y="290" width="220" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- Health check -->
+        <mxCell id="health_check" value="&lt;b&gt;Health Check&lt;/b&gt;&lt;br/&gt;GET /api/health&lt;br/&gt;{ok:true, db:true}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#9c27b0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="575" y="290" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Public URL -->
+        <mxCell id="public_url" value="&lt;b&gt;URL pública (HTTPS automático)&lt;/b&gt;&lt;br/&gt;https://tfgdam-production.up.railway.app" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#388e3c;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="440" width="550" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ── GITHUB ── -->
+        <mxCell id="github" value="&lt;b&gt;GitHub&lt;/b&gt;&lt;br/&gt;husslesnake/TFGDAM&lt;br/&gt;rama: main&lt;br/&gt;trunk-based (feat/fix/docs/chore)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#333333;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="30" y="200" width="200" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- ── CLIENTES ── -->
+        <mxCell id="browser_client" value="&lt;b&gt;Navegador&lt;/b&gt;&lt;br/&gt;PWA instalable&lt;br/&gt;Chrome / Firefox / Edge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="30" y="30" width="180" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="phone_client" value="&lt;b&gt;Android&lt;/b&gt;&lt;br/&gt;App nativa (Kotlin)&lt;br/&gt;operario de almacén" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="30" y="390" width="180" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ── FLECHAS ── -->
+        <!-- GitHub → Railway (webhook auto-deploy) -->
+        <mxCell id="arr_gh_rw" value="git push main&lt;br/&gt;→ auto-deploy (webhook)" style="endArrow=block;endFill=1;html=1;strokeColor=#7e57c2;fontColor=#7e57c2;fontStyle=1;fontSize=10;" edge="1" source="github" target="deploy_backend" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Backend ↔ MySQL -->
+        <mxCell id="arr_be_db" value="MYSQL_URL · pool(10)&lt;br/&gt;prepared statements" style="endArrow=block;endFill=1;startArrow=block;startFill=0;html=1;strokeColor=#d6b656;fontColor=#a07000;fontStyle=1;fontSize=10;" edge="1" source="deploy_backend" target="deploy_mysql" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Browser → Public URL -->
+        <mxCell id="arr_br_url" value="HTTPS · JWT" style="endArrow=block;endFill=1;startArrow=block;startFill=0;html=1;strokeColor=#388e3c;fontColor=#388e3c;fontStyle=1;fontSize=10;" edge="1" source="browser_client" target="public_url" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Android → Public URL -->
+        <mxCell id="arr_and_url" value="HTTPS · JWT" style="endArrow=block;endFill=1;startArrow=block;startFill=0;html=1;strokeColor=#388e3c;fontColor=#388e3c;fontStyle=1;fontSize=10;" edge="1" source="phone_client" target="public_url" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Env vars → Backend (configuran) -->
+        <mxCell id="arr_env_be" value="configura" style="endArrow=open;endFill=0;html=1;strokeColor=#9c27b0;fontColor=#9c27b0;fontSize=9;dashed=1;" edge="1" source="env_vars" target="deploy_backend" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+</mxfile>

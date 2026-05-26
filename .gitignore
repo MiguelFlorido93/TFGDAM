@@ -52,3 +52,6 @@ captures/
 *.aab
 *.keystore
 *.jks
+
+# Excepción: el APK servido públicamente desde el backend SÍ se commitea
+!downloads/*.apk

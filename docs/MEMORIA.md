@@ -210,7 +210,7 @@ Autorización en dos capas: middleware Express `requireRole` en cada ruta proteg
 
 Tres iteraciones del sistema de diseño: (1) **v1** dashboard SaaS genérico con glassmorphism — útil para validar arquitectura de información pero poco diferenciado; (2) **v2** industrial recargado: acero + ámbar, esquinas rectas, biseles metálicos, remaches, hazard tape, fuentes condensadas (Oswald, Barlow) — coherente con el dominio pero visualmente saturado; (3) **v3 actual**: se conservan tipografía y esquinas rectas pero se eliminan gradientes, texturas y remaches. Acento ocre como firma. Resultado minimalista industrial: respira mejor y mejora el contraste.
 
-Pantallas: Login/Registro, Catálogo (cards), Detalle de producto, Mis reservas (cliente), Cola de reservas (operario), Dashboard (admin), Inventario (admin), modales de CRUD. Bocetos y mockups en `docs/figma/` *(pendiente de exportar)*.
+Pantallas diseñadas: Login/Registro, Catálogo (cards), Detalle de producto, Mis reservas (cliente), Cola de reservas (operario), Dashboard (admin), Inventario (admin), modales de CRUD. Los mockups de Figma (v3) están disponibles en el archivo de diseño del proyecto; las exportaciones en PNG/SVG se añadirán a `docs/figma/` para el documento final.
 
 ## 2.7 Arquitectura general del sistema
 
@@ -351,7 +351,7 @@ Cada router declara explícitamente el nivel de auth necesario, p. ej. `router.d
 
 ## 4.9 Swagger / OpenAPI
 
-Pendiente: documentar la API con OpenAPI 3 y servirla en `/api/docs`. Por ahora las rutas están descritas en este capítulo y en los tests del 4.10.
+La API no dispone actualmente de documentación OpenAPI 3 / Swagger. Todas las rutas, métodos, parámetros y respuestas están descritos en la tabla de §4.4 y en los tests automatizados de §4.10. La integración de `swagger-ui-express` con un esquema OpenAPI 3 generado a partir de JSDoc está planificada como mejora futura.
 
 ## 4.10 Pruebas de endpoints
 
@@ -471,7 +471,7 @@ app/src/main/java/com/stockly/app/
 
 ## 6.1 Diseño inicial en Figma
 
-> Pendiente de exportar mockups de las pantallas Android.
+El diseño de las pantallas Android sigue la misma guía de estilo que la versión web (v3 minimalista industrial): fondo oscuro, acento ocre, tipografía condensada, esquinas rectas. Los mockups de Figma se exportarán en PNG para incluirlos en el documento final.
 
 ## 6.2 Navegación entre pantallas
 
@@ -728,7 +728,7 @@ Manual detallado con capturas paso a paso pendiente en `docs/manual-usuario.md`.
 - **GitHub:** https://github.com/husslesnake/TFGDAM
 - **Aplicación desplegada:** https://tfgdam-production.up.railway.app/
 - **Swagger / OpenAPI:** pendiente.
-- **Vídeo demostración:** *[pendiente de grabar]*
+- **Vídeo demostración:** pendiente de grabar — flujo completo: login → reserva → confirmar → entregar → incidencia.
 
 ## Anexo D — Fragmentos de código relevantes
 
